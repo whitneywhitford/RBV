@@ -12,7 +12,7 @@ from operator import itemgetter
 
 #define functions	
 #chr_length modified to fit Readbal
-def chr_length():	
+def chr_length(ref_fai):	
 	reffile = open(ref_fai).readlines()
 	chr_len={}
 	chroms = str(list(range(1,23)))
@@ -93,14 +93,14 @@ def make_random(no_of_samples,size,chr_len,chr_lst,gaps):
 
 
 def make_bed(gen_out):
-	out=open(out_file_dir, "w")
+	windows = []
 	for count,chr,start,end in gen_out:
-		return "{}\t{}\t{}\t{}".format(chr, start, end, count)
-		#print >> out, str(chr) +"\t"+ str(start) +"\t"+ str(end) +"\t"+ str(count)
+		windows.append(str(chr) +" "+ str(start) +" "+ str(end) +" "+ str(count))
+	return windows
 
 
 def main(ref_fai, gaps, no_of_samples, size, iteration_number):
-	chr_len,chr_lst=chr_length()
+	chr_len,chr_lst=chr_length(ref_fai)
 	#gaps=chr_gaps()
 	
 	a=make_random(no_of_samples,size,chr_len,chr_lst,gaps)
@@ -109,5 +109,5 @@ def main(ref_fai, gaps, no_of_samples, size, iteration_number):
 	return random_windows
 
 
-if __name__=='__main__':
-	main(ref_fai, gapfile, no_of_samples, size)
+#if __name__=='__main__':
+#	main(ref_fai, gapfile, no_of_samples, size)
