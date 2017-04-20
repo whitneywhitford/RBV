@@ -32,7 +32,7 @@ def chr_length():
 	
 	return chr_len, chr_lst
 	
-def chr_gaps():
+"""def chr_gaps():
 	# Import chromosome gaps
 	gap_raw=open(gapfile).readlines()
 	gaps={}
@@ -44,7 +44,7 @@ def chr_gaps():
 		else:
 			gaps[chr]=[gap_region]
 		
-	return gaps
+	return gaps"""
 
 
 def rand_sites(no_of_samples,size,chr_len,chr_lst,gaps):
@@ -95,13 +95,13 @@ def make_random(no_of_samples,size,chr_len,chr_lst,gaps):
 def make_bed(gen_out):
 	out=open(out_file_dir, "w")
 	for count,chr,start,end in gen_out:
-		return "{}\t{}\t{}\t{}" format(chr, start, end, count)
+		return "{}\t{}\t{}\t{}".format(chr, start, end, count)
 		#print >> out, str(chr) +"\t"+ str(start) +"\t"+ str(end) +"\t"+ str(count)
 
 
-def main(ref_fai, gapfile, no_of_samples, size, iteration_number):
+def main(ref_fai, gaps, no_of_samples, size, iteration_number):
 	chr_len,chr_lst=chr_length()
-	gaps=chr_gaps()
+	#gaps=chr_gaps()
 	
 	a=make_random(no_of_samples,size,chr_len,chr_lst,gaps)
 	random_windows = make_bed(a)
