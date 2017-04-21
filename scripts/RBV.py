@@ -375,7 +375,9 @@ def main(ref_file, gapfile, CNV_file, variant_permutations, vcf_file, qualCutoff
 		
 		windows_size = CNV_stop - CNV_start
 		
-		random_windows = make_random_windows.main(ref_fai, gap_sites, window_permutations, windows_size, i)
+		permutation = i + 1
+		
+		random_windows = make_random_windows.main(ref_fai, gap_sites, window_permutations, windows_size, permutation)
 		window_het_count = []
 		for w in range(len(random_windows)):		
 			window_chr,raw_window_start,raw_window_end,window_count= random_windows[w].split()
@@ -387,30 +389,33 @@ def main(ref_file, gapfile, CNV_file, variant_permutations, vcf_file, qualCutoff
 			window_het_count.append(het_count(window_vcf_file))
 			os.remove(window_vcf_file)
 		
-		CNV_het_count,CNV_emp_pvalue = empirical_pvalue(window_het_count, CNV_vcf_file, window_permutations)
-		
-		out.write(str(CNV_het_count) + "\t" + str(CNV_emp_pvalue) + "\t")
-		
-		"""if all window_het_count == 0: nan CNV size too small"""
-
+		if all([ v == 0 for v in window_het_count ]):
+			out.write("0\tnan\t")
+			print "CNV" + str(permutation) + ": all random windows of this length contain no heterozygous SNPs. CNV too small or too few permuations"
+			CNV_het_count = het_count(CNV_vcf_file)
+			
+		else:
+			CNV_het_count,CNV_emp_pvalue = empirical_pvalue(window_het_count, CNV_vcf_file, window_permutations)
+			
+			out.write(str(CNV_het_count) + "\t" + str(CNV_emp_pvalue) + "\t")
 
 
 		#DUP
-		CNV_vcf_lines=open(CNV_vcf_file).readlines()
-		CNV_readbal = readbal(CNV_vcf_lines,qualCutoff)
-		CNV_readbal_array = np.array(CNV_readbal).reshape(len(CNV_readbal))
-		
-		CNV_mean = np.mean(CNV_readbal_array)
-		CNV_ttest_stat,CNV_ttest_pvalue = stats.ttest_ind(CNV_readbal_array, rand_readbal_array, equal_var=False)
-		CNV_kstest_stat,CNV_kstest_pvalue = stats.ks_2samp(CNV_readbal_array, rand_readbal_array)
-		
-		os.remove(CNV_vcf_file)
-		
-		out.write(str(CNV_mean) + "\t" + str(CNV_ttest_pvalue) + "\t" + str(CNV_kstest_pvalue) + "\n")
-		
-		"""if len(CNV_readbal) == 0: nan no het SNPs in CNV"""
-
-		
+		if CNV_het_count == 0:
+			out.write("nan\tnan\tnan\n")
+			print "CNV" + str(permutation) + ": contains no heterozygous SNPs, unable to perform duplication analyses"
+		else:
+			CNV_vcf_lines=open(CNV_vcf_file).readlines()
+			CNV_readbal = readbal(CNV_vcf_lines,qualCutoff)
+			CNV_readbal_array = np.array(CNV_readbal).reshape(len(CNV_readbal))
+			
+			CNV_mean = np.mean(CNV_readbal_array)
+			CNV_ttest_stat,CNV_ttest_pvalue = stats.ttest_ind(CNV_readbal_array, rand_readbal_array, equal_var=False)
+			CNV_kstest_stat,CNV_kstest_pvalue = stats.ks_2samp(CNV_readbal_array, rand_readbal_array)
+			
+			os.remove(CNV_vcf_file)
+			
+			out.write(str(CNV_mean) + "\t" + str(CNV_ttest_pvalue) + "\t" + str(CNV_kstest_pvalue) + "\n")
 		
 		
 		
@@ -427,7 +432,7 @@ if __name__=='__main__':
 
 
 
-
+#time stamp with output messages
 
 
 #check for .fai with reference
