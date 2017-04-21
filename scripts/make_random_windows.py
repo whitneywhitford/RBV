@@ -105,7 +105,6 @@ def main(ref_fai, gaps, no_of_samples, size, iteration_number):
 	
 	a=make_random(no_of_samples,size,chr_len,chr_lst,gaps)
 	random_windows = make_bed(a)
-	print "Random window generation - CNV"+str(iteration_number)+" complete."
 	return random_windows
 
 

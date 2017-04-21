@@ -378,6 +378,8 @@ def main(ref_file, gapfile, CNV_file, variant_permutations, vcf_file, qualCutoff
 		permutation = i + 1
 		
 		random_windows = make_random_windows.main(ref_fai, gap_sites, window_permutations, windows_size, permutation)
+		print "Random window generation - CNV"+str(permutation)+" complete."
+		
 		window_het_count = []
 		for w in range(len(random_windows)):		
 			window_chr,raw_window_start,raw_window_end,window_count= random_windows[w].split()
