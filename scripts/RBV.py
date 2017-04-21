@@ -11,6 +11,8 @@ import vcf
 import numpy as np
 import make_random_windows
 from shutil import copyfile
+from datetime import datetime
+
 
 
 
@@ -332,6 +334,11 @@ def main(ref_file, gapfile, CNV_file, variant_permutations, vcf_file, qualCutoff
 
 	ref_fai = str(ref_file) + ".fai"	#check if all fai are just fasta.fai/fa.fai
 	
+	if not os.path.isfile(ref_fai):
+		os.system("samtools faidx  " + ref_file)
+		ref_fai_base = os.path.basename(ref_fai)
+		os.rename(ref_fai, """ "path/to/new/desination/for/" +""" ref_fai_base)
+	
 	#if HC needed
 
 
@@ -378,7 +385,7 @@ def main(ref_file, gapfile, CNV_file, variant_permutations, vcf_file, qualCutoff
 		permutation = i + 1
 		
 		random_windows = make_random_windows.main(ref_fai, gap_sites, window_permutations, windows_size, permutation)
-		print "Random window generation - CNV"+str(permutation)+" complete."
+		print "[" + str(datetime.now()) + "] Random window generation - CNV"+str(permutation)+" complete."
 		
 		window_het_count = []
 		for w in range(len(random_windows)):		
@@ -393,7 +400,7 @@ def main(ref_file, gapfile, CNV_file, variant_permutations, vcf_file, qualCutoff
 		
 		if all([ v == 0 for v in window_het_count ]):
 			out.write("0\tnan\t")
-			print "CNV" + str(permutation) + ": all random windows of this length contain no heterozygous SNPs. CNV too small or too few permuations"
+			print "[" + str(datetime.now()) + "] CNV" + str(permutation) + ": all random windows of this length contain no heterozygous SNPs. CNV too small or too few permuations"
 			CNV_het_count = het_count(CNV_vcf_file)
 			
 		else:
@@ -405,7 +412,7 @@ def main(ref_file, gapfile, CNV_file, variant_permutations, vcf_file, qualCutoff
 		#DUP
 		if CNV_het_count == 0:
 			out.write("nan\tnan\tnan\n")
-			print "CNV" + str(permutation) + ": contains no heterozygous SNPs, unable to perform duplication analyses"
+			print "[" + str(datetime.now()) + "] CNV" + str(permutation) + ": contains no heterozygous SNPs, unable to perform duplication analyses"
 		else:
 			CNV_vcf_lines=open(CNV_vcf_file).readlines()
 			CNV_readbal = readbal(CNV_vcf_lines,qualCutoff)
@@ -434,7 +441,8 @@ if __name__=='__main__':
 
 
 
-#time stamp with output messages
+#Program initialisation message
+#Program completion message
 
 
 #check for .fai with reference
