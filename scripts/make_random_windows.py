@@ -31,20 +31,6 @@ def chr_length(ref_fai):
 			chr_lst.append(rep)
 	
 	return chr_len, chr_lst
-	
-"""def chr_gaps():
-	# Import chromosome gaps
-	gap_raw=open(gapfile).readlines()
-	gaps={}
-	for i in range(len(gap_raw)):
-		chr,start,stop,type=gap_raw[i].strip().split()
-		gap_region=[int(start),int(stop)]
-		if chr in gaps:
-			gaps[chr].append(gap_region)
-		else:
-			gaps[chr]=[gap_region]
-		
-	return gaps"""
 
 
 def rand_sites(no_of_samples,size,chr_len,chr_lst,gaps):
@@ -56,15 +42,18 @@ def rand_sites(no_of_samples,size,chr_len,chr_lst,gaps):
 		chr=choice(chr_lst)
 		point=int(uniform(0+size/2,chr_len[chr]-size/2))
 		
+		rand_start = point-size/2
+		rand_stop = point+size/2
+		
 		# Exclude inaccessible regions
 		include="T"
 		for start,stop in gaps[chr]:
-			if start<=point<=stop:
+			if start<=rand_start<=stop or start<=rand_stop<=stop:
 				include="F"
 		
 		# Return points in accessible regions
 		if include=="T":
-			yield count,int(chr),point-size/2,point+size/2
+			yield count,int(chr),rand_start,rand_stop
 			count+=1
 
 
