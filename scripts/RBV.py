@@ -87,8 +87,38 @@ def parse_args():
 		"--window_permutations", type=int, default=1000,
 		help="Number of permutations to use for read balance analyses."
 		"Default is 1000")
+		
+	parser.add_argument(
+		"--seq_type", required=True,
+		help="REQUIRED. Type of genome sequencing for RBV analysis."
+		"Options: WGS, WES.")
+		
+	parser.add_argument(
+		"--interval_file", default=None,
+		help="Bed file containing interval file used for variant calling."
+		"Must be typical bed format, 0-based indexing, with the first three "
+		"columns the chromosome name, start coordinate, stop coordinate."
+		"REQUIRED for if using WES seq_type.")
+	
+	parser.add_argument(
+		"--calling_method", required=True,
+		help="REQUIRED. Variant calling method used for VCF generation."
+		"Options: HC, samtools.")
 	
 	args = parser.parse_args()
+	
+	if args.seq_type not in ["WGS", "WES"]:
+		sys.exit(
+			"Error. sequencing type must be WGS or WES.")
+	
+	if args.calling_method not in ["HC", "samtools"]:
+		sys.exit(
+			"Error. calling method must be HC, samtools.")
+	
+	if args.seq_type == "WES" and args.interval_file == None:
+		sys.exit(
+			"Error. Interval file required for Whole Exome Sequencing"
+			"RBV analysis")
 	
 	# Return arguments namespace
 	return args
@@ -103,30 +133,8 @@ def parse_args():
 	
 
 #make_random_vars
-def gaps(gapfile,CNVfile):
-	# Import chromosome gaps
-	gap_raw=open(gapfile).readlines()
-	CNV_raw=open(CNVfile).readlines()
-	gaps={}
-	for i in range(len(gap_raw)):
-		chr,start,stop,type=gap_raw[i].strip().split()
-		gap_region=[int(start),int(stop)]
-		if chr in gaps:
-			gaps[chr].append(gap_region)
-		else:
-			gaps[chr]=[gap_region]
 	
-	for i in range(len(CNV_raw)):
-		chr,start,stop,type=gap_raw[i].strip().split()
-		CNV_region=[int(start),int(stop)]
-		if chr in gaps:
-			gaps[chr].append(CNV_region)
-		else:
-			gaps[chr]=[CNV_region]
-	
-	return gaps
-	
-def rand_het_sites(no_of_samples,vcf_file,gaps):	
+def rand_het_sites(no_of_samples,vcf_file):	
 	from random import randrange
 	count=1
 
@@ -159,21 +167,9 @@ def rand_het_sites(no_of_samples,vcf_file,gaps):
 
 		if chr not in str_chroms:
 			continue
-		# Exclude inaccessible regions
-		include="T"
-		for start,stop in gaps[chr]:
-			if start<=coord<=stop:
-				include="F"
-			call = cols[9].split(':')
-			vars_raw = call[0].replace('|', '/')
-			vars = vars_raw.split('/')
-			if vars[0] == vars[1]:
-				include="F"
 		
-		# Return points in accessible regions
-		if include=="T":
-			var_lines.append(variant_line)
-			count+=1
+		var_lines.append(variant_line)
+		count+=1
 	return var_lines
 
 
@@ -225,27 +221,39 @@ def empirical_pvalue(window_het_snps, vcf_outfile, num_window_samples):
 	
 	return sample_het_snps,sample_cum_sum_pvalue
 
-def readbal(variant_lines,qualCutoff):
+def HC_vcf(variant_line):
+	cols = variant_line.strip('\n').split('\t')
+	GT = cols[9].split(':')[0]
+	
+	vars_raw = GT.replace('|', '/')
+	vars = vars_raw.split('/')
+	pos = int(cols[1])
+	qual = float(cols[5])
+	
+	allele1 = cols[9].split(':')[1].split(',')[0]
+	allele2 = cols[9].split(':')[1].split(',')[1]
+	
+	return vars, pos, qual, GT, allele1, allele2
+	
+	
+def readbal(variant_lines,qualCutoff,calling_method):
 	
 	readBalance = []
 	
 	for i in range(len(variant_lines)):
 		if variant_lines[i].startswith('#'):
 			continue
-		cols = variant_lines[i].strip('\n').split('\t')
-		call = cols[9].split(':')
-		vars_raw = call[0].replace('|', '/')
-		vars = vars_raw.split('/')
+		
+		function = globals()[calling_method + "_vcf"]
+		
+		vars, pos, qual, GT, allele1, allele2 = function(variant_lines[i])
+		
+		#het SNPS only
 		if vars[0] != vars[1]:
-			pos = int(cols[1])
-			qual = float(cols[5])
 			if qual < qualCutoff:
 				continue
-			GT = cols[9].split(':')[0]
 			if GT == './.' or GT == '.|.':
 				continue
-			allele1 = cols[9].split(':')[1].split(',')[0]
-			allele2 = cols[9].split(':')[1].split(',')[1]
 			if ',' in allele1 or ',' in allele2:
 				continue
 			if float(allele1) + float(allele2) == 0:
@@ -261,11 +269,11 @@ def readbal(variant_lines,qualCutoff):
 	return readBalance
 
 	
-def random_readbal(no_of_samples,vcf_file,gaps,qualCutoff):
+def random_readbal(no_of_samples,vcf_file,qualCutoff,calling_method):
 	
-	variant_lines = rand_het_sites(no_of_samples,vcf_file,gaps)
+	variant_lines = rand_het_sites(no_of_samples,vcf_file)
 	
-	random_readbal = readbal(variant_lines,qualCutoff)
+	random_readbal = readbal(variant_lines,qualCutoff,calling_method)
 	
 	return random_readbal
 
@@ -328,14 +336,28 @@ def main():
 		#random readbal - perform once per run of RBV
 		bzip_vcf = prep_vcf(args.vcf, args.output_dir)	#check if need to bgzip and tabix
 		
-		gap_sites = gaps(args.gap_bed,args.CNV_bed)
-		rand_readbal = random_readbal(args.variant_permutations,args.vcf,gap_sites,args.variant_quality_cutoff)
+		rand_readbal = random_readbal(args.variant_permutations,args.vcf,args.variant_quality_cutoff,args.calling_method)
 		rand_readbal_array = np.array(rand_readbal).reshape(len(rand_readbal));
 		rand_mean = np.mean(rand_readbal_array)
 		
 		print >>out, "#Random mean read balance = " + str(rand_mean)
 		print >>out, "#"
 		print >>out, "#CHR\tSTART\tSTOP\tpredicted type\th1 het snp number\th1 pvalue\th3 mean readbal\th3 t-test\th3 ks-test"
+		
+		if args.seq_type == 'WGS':
+			gap_sites = make_random_windows.gaps(args.gap_bed,args.CNV_bed)
+			if args.interval_file is not None:
+				intervals = make_random_windows.WGS_intervals(intervalfile)
+			else:
+				reffai_raw=open(ref_fai).readlines()
+				intervals = {}
+				for i in range(len(reffai_raw)):
+					raw_chr,length,bite_index,bases_pl,bites_pl=reffai_raw[i].strip().split()
+					interval_region=[1,int(length)]
+					intervals[chr]=[interval_region]
+		
+		else:
+			intervals = make_random_windows.WES_intervals(intervalfile)
 		
 		CNVs=open(args.CNV_bed).readlines()
 		
@@ -354,9 +376,22 @@ def main():
 			CNV_vcf_file = os.path.join(args.output_dir, "tmp", CNV_vcf_filename)
 			vcf_fetch(bzip_vcf,CNV_vcf_file, CNV_chr, CNV_start, CNV_stop)
 			
-			windows_size = CNV_stop - CNV_start
+			if args.seq_type == 'WGS':
+				windows_size = CNV_stop - CNV_start
+				random_windows = make_random_windows.WGS(ref_fai, gap_sites, args.window_permutations, windows_size, permutation, intervals)
 			
-			random_windows = make_random_windows.main(ref_fai, gap_sites, args.window_permutations, windows_size, permutation)
+			else:
+				print CNV_stop - CNV_start
+				
+				windows_size = 0
+				for coord in range(CNV_start,CNV_stop+1):
+					if coord in intervals[CNV_chr]:
+						windows_size+=1
+				
+				print windows_size
+				
+				random_windows = make_random_windows.WES(intervals, no_of_samples, window_size)
+			
 			print "[" + str(datetime.now()) + "] Random window generation - CNV"+str(permutation)+" complete."
 			
 			window_het_count = []
@@ -388,7 +423,7 @@ def main():
 				print "[" + str(datetime.now()) + "] CNV" + str(permutation) + ": contains no heterozygous SNPs, unable to perform duplication analyses"
 			else:
 				CNV_vcf_lines=open(CNV_vcf_file).readlines()
-				CNV_readbal = readbal(CNV_vcf_lines,args.variant_quality_cutoff)
+				CNV_readbal = readbal(CNV_vcf_lines,args.variant_quality_cutoff,args.calling_method)
 				CNV_readbal_array = np.array(CNV_readbal).reshape(len(CNV_readbal))
 				
 				CNV_mean = np.mean(CNV_readbal_array)
@@ -420,3 +455,5 @@ if __name__=='__main__':
 
 
 #total depth cutoff for vcf, check that qual cutoff refers to correct column
+
+#bed files are 0 based (first base is zero) therefore, CNV and gaps should be 1 based (.txt?)
