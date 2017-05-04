@@ -1,7 +1,6 @@
 # RBV: Read balance validator
 ## User manual and guide
 
---------
 
 ## Overview
 **RBV:** Read balance validator is a Copy number variant (CNV) validator. It uses the relative reads for the reference and alternative allele at a given position (the read balance) to determine the probability of a putative CNV being true.
@@ -54,7 +53,8 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
   --vcf VCF             REQUIRED. VCF file containing the variants for RBV analyses.VCF must be generated using
                         HaploTypeCaller.
   --output_dir OUTPUT_DIR, -o OUTPUT_DIR
-                        Output directory. RBV will create a temporary directory and output file within this directory.
+                        Output directory. RBV will create a temporary directory and output file within this
+                        directory.
   --sample_id SAMPLE_ID, -id SAMPLE_ID
                         Name/ID of sample - for use in plot titles and file
                         naming. Default is sample
