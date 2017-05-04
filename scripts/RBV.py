@@ -52,7 +52,7 @@ def parse_args():
 
 	parser.add_argument(
 		"--gap_bed", required=True,
-		help="REQUIRED. Bed file containing gaps in the reference to mask "
+		help="Bed file containing gaps in the reference to mask "
 		"for random generation. Must be typical bed format, 0-based indexing,"
 		"with the first four columns the chromosome name, start coordinate,"
 		"stop coordinate, and predicted type.")
@@ -103,7 +103,7 @@ def parse_args():
 	parser.add_argument(
 		"--calling_method", required=True,
 		help="REQUIRED. Variant calling method used for VCF generation."
-		"Options: HC, samtools.")
+		"Options: haplotypecaller, samtools, freebayes.")
 	
 	args = parser.parse_args()
 	
@@ -111,9 +111,9 @@ def parse_args():
 		sys.exit(
 			"Error. sequencing type must be WGS or WES.")
 	
-	if args.calling_method not in ["HC", "samtools"]:
+	if args.calling_method not in ["haplotypecaller", "samtools", "freebayes"]:
 		sys.exit(
-			"Error. calling method must be HC, samtools.")
+			"Error. calling method must be haplotypecaller, samtools or freebayes.")
 	
 	if args.seq_type == "WES" and args.interval_file == None:
 		sys.exit(
@@ -221,19 +221,31 @@ def empirical_pvalue(window_het_snps, vcf_outfile, num_window_samples):
 	
 	return sample_het_snps,sample_cum_sum_pvalue
 
-def HC_vcf(variant_line):
-	cols = variant_line.strip('\n').split('\t')
-	GT = cols[9].split(':')[0]
+def haplotypecaller_vcf(variant_cols):
+	allele1 = variant_cols[9].split(':')[1].split(',')[0]
+	allele2 = variant_cols[9].split(':')[1].split(',')[1]
 	
-	vars_raw = GT.replace('|', '/')
-	vars = vars_raw.split('/')
-	pos = int(cols[1])
-	qual = float(cols[5])
+	return allele1, allele2
 	
-	allele1 = cols[9].split(':')[1].split(',')[0]
-	allele2 = cols[9].split(':')[1].split(',')[1]
+def samtools_vcf(variant_cols):
+	allele1F = variant_cols[7].split(';')[12].split('=')[1].split(',')[0]
+	allele1R = variant_cols[7].split(';')[12].split('=')[1].split(',')[1]
+	allele1 = allele1F + allele1R
+	allele2F = variant_cols[7].split(';')[12].split('=')[1].split(',')[2]
+	allele2R = variant_cols[7].split(';')[12].split('=')[1].split(',')[3]
+	allele2 = allele2F + allele2R
 	
-	return vars, pos, qual, GT, allele1, allele2
+	return allele1, allele2
+	
+def freebayes_vcf(variant_cols):
+	allele1F = variant_cols[7].split(';')[12].split('=')[1].split(',')[0]
+	allele1R = variant_cols[7].split(';')[12].split('=')[1].split(',')[1]
+	allele1 = allele1F + allele1R
+	allele2F = variant_cols[7].split(';')[12].split('=')[1].split(',')[2]
+	allele2R = variant_cols[7].split(';')[12].split('=')[1].split(',')[3]
+	allele2 = allele2F + allele2R
+	
+	return allele1, allele2
 	
 	
 def readbal(variant_lines,qualCutoff,calling_method):
@@ -244,16 +256,21 @@ def readbal(variant_lines,qualCutoff,calling_method):
 		if variant_lines[i].startswith('#'):
 			continue
 		
-		function = globals()[calling_method + "_vcf"]
-		
-		vars, pos, qual, GT, allele1, allele2 = function(variant_lines[i])
+		cols = variant_lines[i].strip('\n').split('\t')
+		GT = cols[9].split(':')[0]
+		vars_raw = GT.replace('|', '/')
+		vars = vars_raw.split('/')
 		
 		#het SNPS only
 		if vars[0] != vars[1]:
+			qual = float(cols[5])
 			if qual < qualCutoff:
 				continue
 			if GT == './.' or GT == '.|.':
 				continue
+			
+			allele_reads = globals()[calling_method + "_vcf"]
+			allele1, allele2 = allele_reads(cols)
 			if ',' in allele1 or ',' in allele2:
 				continue
 			if float(allele1) + float(allele2) == 0:
