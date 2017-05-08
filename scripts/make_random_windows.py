@@ -12,8 +12,7 @@ from operator import itemgetter
 
 #define functions
 
-#WGS functions
-
+#WGS no intervals functions
 def gaps(gapfile,CNVfile):
 	# Import chromosome gaps
 	gap_raw=open(gapfile).readlines()
@@ -37,23 +36,9 @@ def gaps(gapfile,CNVfile):
 	
 	return gaps
 
-def WGS_intervals(intervalfile):
-	# Import chromosome gaps
-	interval_raw=open(intervalfile).readlines()
-	intervals={}
-	for i in range(len(interval_raw)):
-		chr,start,stop,type=interval_raw[i].strip().split()
-		interval_region=[int(start),int(stop)]
-		if chr in intervals:
-			intervals[chr].append(interval_region)
-		else:
-			intervals[chr]=[interval_region]
-	
-	return intervals
-
 
 #chr_length modified to fit Readbal
-def WGS_chr_length(ref_fai):	
+def gaps_chr_length(ref_fai):	
 	reffile = open(ref_fai).readlines()
 	chr_len={}
 	chroms = str(list(range(1,23)))
@@ -74,7 +59,7 @@ def WGS_chr_length(ref_fai):
 	return chr_len, chr_lst
 
 
-def WGS_rand_sites(no_of_samples,size,chr_len,chr_lst,gaps):
+def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,gaps):
 	from random import choice,uniform,seed
 	seed(None)
 	count=1
@@ -98,18 +83,18 @@ def WGS_rand_sites(no_of_samples,size,chr_len,chr_lst,gaps):
 			count+=1
 
 
-def WGS_make_random(no_of_samples,size,chr_len,chr_lst,gaps):
+def gaps_make_random(no_of_samples,size,chr_len,chr_lst,gaps):
 	from operator import itemgetter
 	
-	a=WGS_rand_sites(no_of_samples,size,chr_len,chr_lst,gaps)
+	a=gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,gaps)
 	b=sort_coords(a)
 	
 	return b
 
 		
 		
-#WES functions
-def WES_intervals(intervalfile):
+#intervals functions
+def intervals(intervalfile):
 	interval_raw=open(intervalfile).readlines()
 	intervals={}
 	for i in range(len(interval_raw)):
@@ -123,10 +108,10 @@ def WES_intervals(intervalfile):
 	return intervals
 	
 	
-def WES_chr_length(intervals):	
+def intervals_chr_length(interval_list):	
 	chr_exome_len={}
-	for chr in intervals:
-		chr_exome_len[chr]=int(len(intervals[chr]))
+	for chr in interval_list:
+		chr_exome_len[chr]=int(len(interval_list[chr]))
 	
 	chr_lst=[]
 	for chr in chr_exome_len:							#account for different lengths of chromosomes so that random takes this into account
@@ -136,7 +121,7 @@ def WES_chr_length(intervals):
 	
 	return chr_exome_len, chr_lst
 	
-def WES_rand_sites(no_of_samples,size,chr_exome_len,chr_lst,intervals):
+def intervals_rand_sites(no_of_samples,size,chr_exome_len,chr_lst,interval_list):
 	from random import choice,uniform,seed
 	seed(None)
 	count=1
@@ -145,7 +130,7 @@ def WES_rand_sites(no_of_samples,size,chr_exome_len,chr_lst,intervals):
 		chr=choice(chr_lst)
 		point=int(uniform(0+size/2,chr_exome_len[chr]-size/2))
 		
-		chr_intervals = intervals[chr]
+		chr_intervals = interval_list[chr]
 		
 		print chr, point, chr_intervals[point]
 		
@@ -156,23 +141,22 @@ def WES_rand_sites(no_of_samples,size,chr_exome_len,chr_lst,intervals):
 		count+=1
 
 
-def WES_make_random(no_of_samples,size,chr_exome_len,chr_lst,intervals):
+def intervals_make_random(no_of_samples,size,chr_exome_len,chr_lst,interval_list):
 	from operator import itemgetter
 	
-	a=WES_rand_sites(no_of_samples,size,chr_exome_len,chr_lst,intervals)
+	a=intervals_rand_sites(no_of_samples,size,chr_exome_len,chr_lst,interval_list)
 	b=sort_coords(a)
 	
 	return b
 	
 
+#shared functions
 def make_bed(gen_out):
 	windows = []
 	for count,chr,start,end in gen_out:
 		windows.append(str(chr) +" "+ str(start) +" "+ str(end) +" "+ str(count))
 	return windows
 
-
-#shared functions
 def sort_coords(coords,cols=itemgetter(1,2)):
 	unsorted=[]
 	coord=iter(coords)
@@ -186,19 +170,20 @@ def sort_coords(coords,cols=itemgetter(1,2)):
 	
 	for i in range(len(sorted_regions)):
 		yield sorted_regions[i]
-		
 
-def WGS(ref_fai, gaps, no_of_samples, size, iteration_number, intervals):
-	chr_len,chr_lst=WGS_chr_length(ref_fai)
+		
+#main functions
+def gaps_windows(ref_fai, gaps, no_of_samples, size):
+	chr_len,chr_lst=gaps_chr_length(ref_fai)
 	
-	a=WGS_make_random(no_of_samples,size,chr_len,chr_lst,gaps)
+	a=gaps_make_random(no_of_samples,size,chr_len,chr_lst,gaps)
 	random_windows = make_bed(a)
 	return random_windows
 	
-def WES(intervals, no_of_samples, size):
-	chr_exome_len,chr_lst=WES_chr_length(intervals)
+def intervals_window(interval_list, no_of_samples, size):
+	chr_exome_len,chr_lst=intervals_chr_length(interval_list)
 	
-	a=WES_make_random(no_of_samples,size,chr_exome_len,chr_lst,intervals)
+	a=intervals_make_random(no_of_samples,size,chr_exome_len,chr_lst,interval_list)
 	random_windows = make_bed(a)
 	return random_windows
 
