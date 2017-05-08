@@ -42,9 +42,9 @@ def WGS_intervals(intervalfile):
 	interval_raw=open(intervalfile).readlines()
 	intervals={}
 	for i in range(len(interval_raw)):
-		chr,start,stop,type=gap_raw[i].strip().split()
+		chr,start,stop,type=interval_raw[i].strip().split()
 		interval_region=[int(start),int(stop)]
-		if chr in gaps:
+		if chr in intervals:
 			intervals[chr].append(interval_region)
 		else:
 			intervals[chr]=[interval_region]
