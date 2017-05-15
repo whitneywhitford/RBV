@@ -66,20 +66,18 @@ def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,gaps):
 	# Choose chromosome and point on chromosome
 	while count<=no_of_samples:
 		chr=choice(chr_lst)
-		point=int(uniform(0+size/2,chr_len[chr]-size/2))
-		
-		rand_start = point-size/2
-		rand_stop = point+size/2
+		point=int(uniform(0,chr_len[chr]-size))
+
 		
 		# Exclude inaccessible regions
 		include="T"
 		for start,stop in gaps[chr]:
-			if (start<=rand_start<=stop or start<=rand_stop<=stop) and ((rand_start not in range(start,stop+1)) or (rand_stop not in range(start,stop+1))):
+			if (start<=point<=stop and start<=(point+size)<=stop):
 				include="F"
 		
 		# Return points in accessible regions
 		if include=="T":
-			yield count,int(chr),rand_start,rand_stop
+			yield count,int(chr),point,(point+size)
 			count+=1
 
 
@@ -95,61 +93,69 @@ def gaps_make_random(no_of_samples,size,chr_len,chr_lst,gaps):
 		
 #intervals functions
 def intervals(intervalfile):
-	interval_raw=open(intervalfile).readlines()
-	intervals={}
-	for i in range(len(interval_raw)):
-		chr,start,stop,type=interval_raw[i].strip().split()
-		interval_region=[int(start),int(stop)]
-		if chr in intervals:
-			intervals[chr].extend(range(int(start),(int(stop))+1))
+	gap_raw=open(intervalfile).readlines()
+	gaps={}
+	for i in range(len(gap_raw)):
+		chr,start,stop,type=gap_raw[i].strip().split()
+		gap_region=[int(start),int(stop)]
+		if chr in gaps:
+			gaps[chr].append(gap_region)
 		else:
-			intervals[chr]=range(int(start),(int(stop)+1))
-			
-	return intervals
+			gaps[chr]=[gap_region]
 	
-	
+	return gaps	
+
 def intervals_chr_length(interval_list):	
-	chr_exome_len={}
-	for chr in interval_list:
-		chr_exome_len[chr]=int(len(interval_list[chr]))
+	chr_interval_len={}
+	chroms = str(list(range(1,23)))
+	for chr in interval_list:	
+		if chr in chroms:
+			chr_interval_len[chr] = interval_list[chr][-1][1]
+		else:
+			continue
 	
 	chr_lst=[]
-	for chr in chr_exome_len:							#account for different lengths of chromosomes so that random takes this into account
-		chr_rep=[str(chr)] * int(round(chr_exome_len[str(chr)]/100,0)) #100 needs to be smaller than the smallest total chromosome exome intervals 
+	for chr in chr_interval_len:							#account for different lengths of chromosomes so that random takes this into account
+		chr_rep=[str(chr)] * int(round(chr_interval_len[str(chr)]/10000,0)) #10000 needs to be smaller than the smallest total chromosome exome intervals 
 		for rep in chr_rep:
 			chr_lst.append(rep)
 	
-	return chr_exome_len, chr_lst
+	return chr_interval_len, chr_lst
 	
-def intervals_rand_sites(no_of_samples,size,chr_exome_len,chr_lst,interval_list):
+def intervals_rand_sites(no_of_samples,window_size,chr_interval_len,chr_lst,interval_list):
 	from random import choice,uniform,seed
 	seed(None)
 	count=1
 	# Choose chromosome and point on chromosome
 	while count<=no_of_samples:
 		chr=choice(chr_lst)
-		point=int(uniform(0+size/2,chr_exome_len[chr]-size/2))
+		point=int(uniform(1,chr_interval_len[chr]-window_size))
+		past_start = False
+		window_count = 0
 		
-		chr_intervals = interval_list[chr]
-		
-		print chr, point, chr_intervals[point]
-		
-		start = chr_intervals[point-size/2]
-		stop = chr_intervals[point+size/2]
-		
-		yield count,int(chr),start,stop
-		count+=1
-
-
-def intervals_make_random(no_of_samples,size,chr_exome_len,chr_lst,interval_list):
+		for start,stop in interval_list[chr]:
+			if start<=point<=stop:	#start found
+				window_start = point
+				window_count = (stop - point) + 1
+				past_start = True
+			elif past_start: 
+				window_count += (stop - start) + 1
+				
+			if window_count >= window_size:
+				window_end = stop - (window_count - window_size)
+				yield count,int(chr),window_start,window_end
+				count+=1
+				break
+					
+def intervals_make_random(no_of_samples,size,chr_interval_len,chr_lst,interval_list):
 	from operator import itemgetter
 	
-	a=intervals_rand_sites(no_of_samples,size,chr_exome_len,chr_lst,interval_list)
+	a=intervals_rand_sites(no_of_samples,size,chr_interval_len,chr_lst,interval_list)
 	b=sort_coords(a)
 	
 	return b
-	
 
+	
 #shared functions
 def make_bed(gen_out):
 	windows = []
@@ -181,9 +187,9 @@ def gaps_windows(ref_fai, gaps, no_of_samples, size):
 	return random_windows
 	
 def intervals_window(interval_list, no_of_samples, size):
-	chr_exome_len,chr_lst=intervals_chr_length(interval_list)
+	chr_interval_len,chr_lst=intervals_chr_length(interval_list)
 	
-	a=intervals_make_random(no_of_samples,size,chr_exome_len,chr_lst,interval_list)
+	a=intervals_make_random(no_of_samples,size,chr_interval_len,chr_lst,interval_list)
 	random_windows = make_bed(a)
 	return random_windows
 
