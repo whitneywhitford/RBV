@@ -51,7 +51,7 @@ def parse_args():
 		"and predicted CNV type.")
 
 	parser.add_argument(
-		"--gap_bed", required=True,
+		"--gap_bed", default=None,
 		help="Bed file containing gaps in the reference to mask "
 		"for random generation. Must be typical bed format, 0-based indexing,"
 		"with the first four columns the chromosome name, start coordinate,"
@@ -204,21 +204,26 @@ def het_count(vcf_file):
 
 	
 def empirical_pvalue(window_het_snps, vcf_outfile, num_window_samples):
-	window_het_snp_sum = np.zeros(((max(window_het_snps)+1),), dtype=np.float)
-	
-	for i in range(len(window_het_snps)):
-		window_het_snp_count = window_het_snps[i]
-		window_het_snp_sum[window_het_snp_count] += 1
-	
-	
 	sample_cum_sum = 0
 	sample_het_snps = het_count(vcf_outfile)
 	
-	for n in range((sample_het_snps+1)):
-		sample_cum_sum += window_het_snp_sum[n]
+	if sample_het_snps > max(window_het_snps):
+		sample_cum_sum_pvalue = 1.000
 	
-	sample_cum_sum_pvalue = sample_cum_sum / num_window_samples
-	
+	else:
+		window_het_snp_sum = np.zeros(((max(window_het_snps)+1),), dtype=np.float)
+		
+		
+		
+		for i in range(len(window_het_snps)):
+			window_het_snp_count = window_het_snps[i]
+			window_het_snp_sum[window_het_snp_count] += 1
+		
+		for n in range((sample_het_snps+1)):
+			sample_cum_sum += window_het_snp_sum[n]
+		
+		sample_cum_sum_pvalue = sample_cum_sum / num_window_samples
+		
 	return sample_het_snps,sample_cum_sum_pvalue
 
 def haplotypecaller_vcf(variant_cols):
@@ -344,7 +349,7 @@ def main():
 		print >>out, "#RBV: Read balance validator"
 		print >>out, "#Command: " + str(sys.argv)
 		
-		
+
 		
 		
 		
@@ -361,20 +366,16 @@ def main():
 		print >>out, "#"
 		print >>out, "#CHR\tSTART\tSTOP\tpredicted type\th1 het snp number\th1 pvalue\th3 mean readbal\th3 t-test\th3 ks-test"
 		
-		if args.seq_type == 'WGS':
+		if args.interval_file is not None:
+			intervals = make_random_windows.intervals(args.interval_file)
+			
+		elif args.gap_bed is not None:
 			gap_sites = make_random_windows.gaps(args.gap_bed,args.CNV_bed)
-			if args.interval_file is not None:
-				intervals = make_random_windows.WGS_intervals(intervalfile)
-			else:
-				reffai_raw=open(ref_fai).readlines()
-				intervals = {}
-				for i in range(len(reffai_raw)):
-					raw_chr,length,bite_index,bases_pl,bites_pl=reffai_raw[i].strip().split()
-					interval_region=[1,int(length)]
-					intervals[chr]=[interval_region]
-		
 		else:
-			intervals = make_random_windows.WES_intervals(intervalfile)
+			gap_sites = {}
+			zeros = [0,0]
+			for gap_chr in range(1,23):
+				gap_sites[str(gap_chr)]=[zeros]
 		
 		CNVs=open(args.CNV_bed).readlines()
 		
@@ -393,21 +394,18 @@ def main():
 			CNV_vcf_file = os.path.join(args.output_dir, "tmp", CNV_vcf_filename)
 			vcf_fetch(bzip_vcf,CNV_vcf_file, CNV_chr, CNV_start, CNV_stop)
 			
-			if args.seq_type == 'WGS':
-				windows_size = CNV_stop - CNV_start
-				random_windows = make_random_windows.WGS(ref_fai, gap_sites, args.window_permutations, windows_size, permutation, intervals)
+			if args.interval_file is not None:				
+				window_size = 0
+				for coord in range(CNV_start,CNV_stop+1):
+					for start,stop in intervals[CNV_chr]:
+						if start<=coord<=stop:
+							window_size+=1
+				
+				random_windows = make_random_windows.intervals_window(intervals, args.window_permutations, window_size)
 			
 			else:
-				print CNV_stop - CNV_start
-				
-				windows_size = 0
-				for coord in range(CNV_start,CNV_stop+1):
-					if coord in intervals[CNV_chr]:
-						windows_size+=1
-				
-				print windows_size
-				
-				random_windows = make_random_windows.WES(intervals, no_of_samples, window_size)
+				windows_size = CNV_stop - CNV_start
+				random_windows = make_random_windows.gaps_windows(ref_fai, gap_sites, args.window_permutations, windows_size)
 			
 			print "[" + str(datetime.now()) + "] Random window generation - CNV"+str(permutation)+" complete."
 			
@@ -461,7 +459,7 @@ def main():
 
 if __name__=='__main__':
 	main()
-#ref_file, gapfile, CNV_file, variant_permutations, vcf_file, qualCutoff, window_permutations, sample_id, out_dir
+
 
 
 
@@ -471,6 +469,6 @@ if __name__=='__main__':
 #Program completion message
 
 
-#total depth cutoff for vcf, check that qual cutoff refers to correct column
+#total depth cutoff for vcf
 
 #bed files are 0 based (first base is zero) therefore, CNV and gaps should be 1 based (.txt?)
