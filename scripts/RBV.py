@@ -103,7 +103,7 @@ def parse_args():
 	parser.add_argument(
 		"--calling_method", required=True,
 		help="REQUIRED. Variant calling method used for VCF generation."
-		"Options: haplotypecaller, samtools, freebayes.")
+		"Options: haplotypecaller, samtools, freebayes, platypus.")
 	
 	args = parser.parse_args()
 	
@@ -111,9 +111,9 @@ def parse_args():
 		sys.exit(
 			"ERROR: Sequencing type must be WGS or WES.")
 	
-	if args.calling_method not in ["haplotypecaller", "samtools", "freebayes"]:
+	if args.calling_method not in ["haplotypecaller", "samtools", "freebayes", "platypus"]:
 		sys.exit(
-			"ERROR: Calling method must be haplotypecaller, samtools or freebayes.")
+			"ERROR: Calling method must be haplotypecaller, samtools, freebayes, or platypus.")
 	
 	if args.seq_type == "WES" and args.interval_file == None:
 		sys.exit(
