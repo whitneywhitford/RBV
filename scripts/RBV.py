@@ -257,6 +257,13 @@ def freebayes_vcf(variant_cols):
 	
 	return allele1, allele2
 	
+def platypus_vcf(variant_cols):
+	allele1 = int(cols[7].split(';')[17].split('=')[1])
+	total =int(cols[7].split(';')[14].split('=')[1])
+	allele2 = total - allele1
+	
+	return allele1, allele2
+	
 	
 def readbal(variant_lines,qualCutoff,calling_method):
 	
