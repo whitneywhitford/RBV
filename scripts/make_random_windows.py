@@ -93,17 +93,17 @@ def gaps_make_random(no_of_samples,size,chr_len,chr_lst,gaps):
 		
 #intervals functions
 def intervals(intervalfile):
-	gap_raw=open(intervalfile).readlines()
-	gaps={}
-	for i in range(len(gap_raw)):
-		chr,start,stop,type=gap_raw[i].strip().split()
-		gap_region=[int(start),int(stop)]
-		if chr in gaps:
-			gaps[chr].append(gap_region)
+	interval_raw=open(intervalfile).readlines()
+	intervals={}
+	for i in range(len(interval_raw)):
+		chr,start,stop,type=interval_raw[i].strip().split()
+		interval_region=[int(start),int(stop)]
+		if chr in intervals:
+			intervals[chr].append(interval_region)
 		else:
-			gaps[chr]=[gap_region]
+			intervals[chr]=[interval_region]
 	
-	return gaps	
+	return intervals	
 
 def intervals_chr_length(interval_list):	
 	chr_interval_len={}
