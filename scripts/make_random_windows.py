@@ -72,8 +72,12 @@ def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,gaps):
 		# Exclude inaccessible regions
 		include="T"
 		for start,stop in gaps[chr]:
+			if (point <= start) and ((point+size)>= stop):
+				include="F"
+				break #if encounters any gap, window won't be included
 			if (start<=point<=stop and start<=(point+size)<=stop):
 				include="F"
+				break #if encounters any gap, window won't be included
 		
 		# Return points in accessible regions
 		if include=="T":
