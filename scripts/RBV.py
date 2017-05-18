@@ -159,8 +159,6 @@ def rand_het_sites(no_of_samples,vcf_file):
 	while count<=no_of_samples:
 		line_number = randrange((comment_count - 1), len(vcf))
 		
-		#print line_number
-		
 		variant_line = vcf[line_number]
 		cols = variant_line.strip('\n').split('\t')
 		chr = cols[0]
@@ -373,18 +371,19 @@ def main():
 	print >>out, "#"
 	print >>out, "#CHR\tSTART\tSTOP\tpredicted type\th1 het snp number\th1 pvalue\th3 mean readbal\th3 t-test\th3 ks-test"
 	
+	CNVs=open(args.CNV_bed).readlines()
+	
 	if args.interval_file is not None:
 		intervals = make_random_windows.intervals(args.interval_file)
 		
 	elif args.gap_bed is not None:
-		gap_sites = make_random_windows.gaps(args.gap_bed,args.CNV_bed)
+		gap_sites = make_random_windows.gaps(args.gap_bed)
+		total_gap_sites = make_random_windows.gaps_total(gap_sites,CNVs)
 	else:
 		gap_sites = {}
 		zeros = [0,0]
 		for gap_chr in range(1,23):
 			gap_sites[str(gap_chr)]=[zeros]
-	
-	CNVs=open(args.CNV_bed).readlines()
 	
 	#For each CNV
 	for i in range(len(CNVs)):
@@ -411,8 +410,13 @@ def main():
 			random_windows = make_random_windows.intervals_window(intervals, args.window_permutations, window_size)
 		
 		else:
-			windows_size = CNV_stop - CNV_start
-			random_windows = make_random_windows.gaps_windows(ref_fai, gap_sites, args.window_permutations, windows_size)
+			window_size = 0
+			for coord in range(CNV_start,CNV_stop+1):
+				for start,stop in gap_sites[CNV_chr]:
+					if not start<=coord<=stop:
+						window_size+=1
+			
+			random_windows = make_random_windows.gaps_windows(ref_fai, total_gap_sites, args.window_permutations, window_size)
 		
 		print "[" + str(datetime.now()) + "] Random window generation - CNV"+str(permutation)+" complete."
 		
