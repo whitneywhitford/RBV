@@ -375,6 +375,8 @@ def main():
 	
 	if args.interval_file is not None:
 		intervals = make_random_windows.intervals(args.interval_file)
+		CNV_list = make_random_windows.CNV_list(args.CNV_bed)
+		total_intervals = make_random_windows.random_intervals(intervals, CNV_list)
 		
 	elif args.gap_bed is not None:
 		gap_sites = make_random_windows.gaps(args.gap_bed)
@@ -384,6 +386,7 @@ def main():
 		zeros = [0,0]
 		for gap_chr in range(1,23):
 			gap_sites[str(gap_chr)]=[zeros]
+		total_gap_sites = make_random_windows.gaps_total(gap_sites,CNVs)
 	
 	#For each CNV
 	for i in range(len(CNVs)):
@@ -400,21 +403,28 @@ def main():
 		CNV_vcf_file = os.path.join(args.output_dir, "tmp", CNV_vcf_filename)
 		vcf_fetch(bzip_vcf,CNV_vcf_file, CNV_chr, CNV_start, CNV_stop)
 		
-		if args.interval_file is not None:				
+		if args.interval_file is not None:
 			window_size = 0
 			for coord in range(CNV_start,CNV_stop+1):
 				for start,stop in intervals[CNV_chr]:
-					if start<=coord<=stop:
+					if (start<=coord<=stop):
 						window_size+=1
 			
-			random_windows = make_random_windows.intervals_window(intervals, args.window_permutations, window_size)
+			random_windows = make_random_windows.intervals_window(total_intervals, args.window_permutations, window_size)
 		
 		else:
-			window_size = 0
+			window_size = CNV_stop - CNV_start + 1
+			"""print window_size
 			for coord in range(CNV_start,CNV_stop+1):
 				for start,stop in gap_sites[CNV_chr]:
-					if not start<=coord<=stop:
-						window_size+=1
+					if start<=coord<=stop:
+						print start
+						print coord
+						print stop
+						window_size-=1
+						break #if encounters any gap, nucleotide won't be included in window size
+			
+			print window_size"""
 			
 			random_windows = make_random_windows.gaps_windows(ref_fai, total_gap_sites, args.window_permutations, window_size)
 		

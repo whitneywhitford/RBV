@@ -6,6 +6,7 @@
 
 
 import sys
+from copy import deepcopy
 from operator import itemgetter
 
 
@@ -13,10 +14,9 @@ from operator import itemgetter
 #define functions
 
 #WGS no intervals functions
-def gaps(gapfile,CNVfile):
+def gaps(gapfile):
 	# Import chromosome gaps
 	gap_raw=open(gapfile).readlines()
-	CNV_raw=open(CNVfile).readlines()
 	gaps={}
 	for i in range(len(gap_raw)):
 		chr,start,stop,type=gap_raw[i].strip().split()
@@ -26,16 +26,18 @@ def gaps(gapfile,CNVfile):
 		else:
 			gaps[chr]=[gap_region]
 	
-	for i in range(len(CNV_raw)):
-		chr,start,stop,type=gap_raw[i].strip().split()
-		CNV_region=[int(start),int(stop)]
-		if chr in gaps:
-			gaps[chr].append(CNV_region)
-		else:
-			gaps[chr]=[CNV_region]
-	
 	return gaps
 
+def gaps_total(gaplist,CNVs):
+	for i in range(len(CNVs)):
+		chr,start,stop,type=CNVs[i].strip().split()
+		CNV_region=[int(start),int(stop)]
+		if chr in gaplist:
+			gaplist[chr].append(CNV_region)
+		else:
+			gaplist[chr]=[CNV_region]
+	
+	return gaplist
 
 #chr_length modified to fit Readbal
 def gaps_chr_length(ref_fai):	
@@ -75,7 +77,7 @@ def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,gaps):
 			if (point <= start) and ((point+size)>= stop):
 				include="F"
 				break #if encounters any gap, window won't be included
-			if (start<=point<=stop and start<=(point+size)<=stop):
+			if (start<=point<=stop or start<=(point+size)<=stop):
 				include="F"
 				break #if encounters any gap, window won't be included
 		
@@ -109,6 +111,48 @@ def intervals(intervalfile):
 	
 	return intervals	
 
+	
+def CNV_list(CNVfile):
+	CNV_raw=open(CNVfile).readlines()
+	CNVs={}
+	for i in range(len(CNV_raw)):
+		chr,start,stop,type=CNV_raw[i].strip().split()
+		CNV_region=[int(start),int(stop)]
+		if chr in CNVs:
+			CNVs[chr].append(CNV_region)
+		else:
+			CNVs[chr]=[CNV_region]
+	return CNVs
+
+
+	#excludes CNVs from the intervals for random generation 
+def random_intervals(interval_list, CNVs):
+	unsorted_rand_intervals = deepcopy(interval_list)
+	
+	for chr in CNVs:
+		for CNV_start, CNV_stop in CNVs[chr]:
+			for interval in unsorted_rand_intervals[chr]:
+				interval_start = interval[0]
+				interval_stop = interval[1]
+				if (CNV_start <= interval_start) and (CNV_stop >= interval_stop):
+					unsorted_rand_intervals[chr].remove([interval_start, interval_stop])
+				elif (interval_start <= CNV_start <= interval_stop) or (interval_start <= CNV_stop <= interval_stop): #if ranges overlap
+					if CNV_start <= interval_start:
+						interval_start = CNV_stop + 1
+					else:
+						interval[1] = CNV_start - 1
+						if CNV_stop <= interval_stop:
+							#print CNV_stop+1
+							#print interval_stop
+							unsorted_rand_intervals[chr].append([CNV_stop+1, interval_stop])
+						
+	rand_intervals = {}
+	for chr in unsorted_rand_intervals:
+		rand_intervals[chr] = sorted(unsorted_rand_intervals[chr])
+	
+	return rand_intervals
+
+	
 def intervals_chr_length(interval_list):	
 	chr_interval_len={}
 	chroms = str(list(range(1,23)))
@@ -139,15 +183,15 @@ def intervals_rand_sites(no_of_samples,window_size,chr_interval_len,chr_lst,inte
 		
 		for start,stop in interval_list[chr]:
 			if start<=point<=stop:	#start found
-				window_start = point
 				window_count = (stop - point) + 1
 				past_start = True
+
 			elif past_start: 
 				window_count += (stop - start) + 1
 				
 			if window_count >= window_size:
 				window_end = stop - (window_count - window_size)
-				yield count,int(chr),window_start,window_end
+				yield count,int(chr),point,window_end
 				count+=1
 				break
 					
@@ -190,7 +234,7 @@ def gaps_windows(ref_fai, gaps, no_of_samples, size):
 	random_windows = make_bed(a)
 	return random_windows
 	
-def intervals_window(interval_list, no_of_samples, size):
+def intervals_window(interval_list, no_of_samples, size):	
 	chr_interval_len,chr_lst=intervals_chr_length(interval_list)
 	
 	a=intervals_make_random(no_of_samples,size,chr_interval_len,chr_lst,interval_list)
