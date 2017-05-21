@@ -410,7 +410,14 @@ def main():
 					if (start<=coord<=stop):
 						window_size+=1
 			
-			random_windows = make_random_windows.intervals_window(total_intervals, args.window_permutations, window_size)
+			print window_size
+			
+			if window_size > 0:
+				random_windows = make_random_windows.intervals_window(total_intervals, args.window_permutations, window_size)
+			
+			else:
+				zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)
+				random_windows = [zero_window]
 		
 		else:
 			window_size = CNV_stop - CNV_start + 1
@@ -443,7 +450,6 @@ def main():
 			os.remove(window_vcf_file)
 		
 		if all([ v == 0 for v in window_het_count ]):
-			out.write("0\tnan\t")
 			
 			no_rand_SNP_warning = "WARNING: CNV" + str(permutation) + " all random windows of this length contain no heterozygous SNPs. CNV too small or too few permuations"
 			
@@ -453,6 +459,8 @@ def main():
 			warning_count += 1
 			
 			CNV_het_count = het_count(CNV_vcf_file)
+			
+			out.write(str(CNV_het_count) + "\tnan\t")
 			
 		else:
 			CNV_het_count,CNV_emp_pvalue = empirical_pvalue(window_het_count, CNV_vcf_file, args.window_permutations)
@@ -475,11 +483,28 @@ def main():
 			CNV_readbal = readbal(CNV_vcf_lines,args.variant_quality_cutoff,args.calling_method)
 			CNV_readbal_array = np.array(CNV_readbal).reshape(len(CNV_readbal))
 			
+			CNV_readbal_array_length = len(CNV_readbal_array)
+			
 			CNV_mean = np.mean(CNV_readbal_array)
-			CNV_ttest_stat,CNV_ttest_pvalue = stats.ttest_ind(CNV_readbal_array, rand_readbal_array, equal_var=False)
+			out.write(str(CNV_mean) + "\t")
+			
+			if CNV_readbal_array_length > 1:
+				CNV_ttest_stat,CNV_ttest_pvalue = stats.ttest_ind(CNV_readbal_array, rand_readbal_array, equal_var=False)
+				out.write(str(CNV_ttest_pvalue) + "\t")
+			else:
+				single_CNV_hetSNP_warning = "WARNING: CNV" + str(permutation) + " contains only one heterozygous SNP. Welch's t-test not possible, please refer to KS test p-value"
+				
+				out.write("nan\t")
+				
+				print "[" + str(datetime.now()) + "] " + single_CNV_hetSNP_warning
+				
+				warning_messages.append(single_CNV_hetSNP_warning)
+				warning_count += 1
+			
+			
 			CNV_kstest_stat,CNV_kstest_pvalue = stats.ks_2samp(CNV_readbal_array, rand_readbal_array)
 				
-			out.write(str(CNV_mean) + "\t" + str(CNV_ttest_pvalue) + "\t" + str(CNV_kstest_pvalue) + "\n")
+			out.write(str(CNV_kstest_pvalue) + "\n")
 		
 		os.remove(CNV_vcf_file)
 	
