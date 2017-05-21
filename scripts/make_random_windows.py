@@ -127,7 +127,7 @@ def CNV_list(CNVfile):
 
 	#excludes CNVs from the intervals for random generation 
 def random_intervals(interval_list, CNVs):
-	unsorted_rand_intervals = deepcopy(interval_list)
+	unsorted_rand_intervals = deepcopy(interval_list)	#make copy of intervals that does not reference original
 	
 	for chr in CNVs:
 		for CNV_start, CNV_stop in CNVs[chr]:
@@ -142,8 +142,6 @@ def random_intervals(interval_list, CNVs):
 					else:
 						interval[1] = CNV_start - 1
 						if CNV_stop <= interval_stop:
-							#print CNV_stop+1
-							#print interval_stop
 							unsorted_rand_intervals[chr].append([CNV_stop+1, interval_stop])
 						
 	rand_intervals = {}
