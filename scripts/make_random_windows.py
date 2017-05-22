@@ -1,8 +1,4 @@
-#modified from http://genometoolbox.blogspot.co.nz/2014/06/generate-random-genomic-positions.html
-
-
-#TO DO: include the CNVs to be investigated to be included in gaps?
-
+#Adapated from http://genometoolbox.blogspot.co.nz/2014/06/generate-random-genomic-positions.html accessed 10/03/2017
 
 
 import sys
