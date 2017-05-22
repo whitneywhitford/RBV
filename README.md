@@ -9,6 +9,9 @@ The read balance distribution is different based on the copy number of the genet
 
 <img src="./images/haploid_readbal.png" width="290"><img src="./images/diploid_readbal.png" width="290"><img src="./images/triploid_readbal.png" width="290">
 
+## Please note RBV is still in pre-release stages
+Changes are made to the master branch quite frequently, so there is a high chance there is a number of known or unknown bugs at any given time. If you'd like to try things before release, please feel free to contact us (either via an Issue or by email to Whitney Whitford - address at the bottom of this page) to enquire about the current status of the program.
+
 ## Citation
 
 
@@ -75,6 +78,9 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
 RBV is made by:
 
 - Whitney Whitford
+- Klaus Lehnert
+- Russell Snell
+- Jessie Jacobsen
 
 ## Support
 
