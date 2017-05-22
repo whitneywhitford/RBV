@@ -325,13 +325,13 @@ def main():
 	
 	args = parse_args()
 	
-	print "------------------------------------------------------------------------------------------"
-	print "[" + str(datetime.now()) + "] Read Balance Validator (RBV) v0.1-commit_id"
-	print "[" + str(datetime.now()) + "] Copyright (c) 2017 Whitney Chelsea Whitford"
-	print "[" + str(datetime.now()) + "] For support and documentation go to https://github.com/whitneywhitford/RBV"
-	print "[" + str(datetime.now()) + "] Program Args: ", str(sys.argv)
-	print "------------------------------------------------------------------------------------------"
-	print "------------------------------------------------------------------------------------------"
+	sys.stdout.write("------------------------------------------------------------------------------------------\n")
+	sys.stdout.write("[" + str(datetime.now()) + "] Read Balance Validator (RBV) v0.1-commit_id\n")
+	sys.stdout.write("[" + str(datetime.now()) + "] Copyright (c) 2017 Whitney Chelsea Whitford\n")
+	sys.stdout.write("[" + str(datetime.now()) + "] For support and documentation go to https://github.com/whitneywhitford/RBV\n")
+	sys.stdout.write("[" + str(datetime.now()) + "] Program Args: " + str(sys.argv) + "\n")
+	sys.stdout.write("------------------------------------------------------------------------------------------\n")
+	sys.stdout.write("------------------------------------------------------------------------------------------\n")
 	
 	warning_messages = []
 	warning_count = 0
@@ -356,8 +356,8 @@ def main():
 	
 
 	out = open(out_file, 'w')
-	print >>out, "#RBV: Read balance validator"
-	print >>out, "#Command: " + str(sys.argv)
+	out.write("#RBV: Read balance validator\n")
+	out.write("#Command: " + str(sys.argv) + "\n")
 
 	
 	#random readbal - perform once per run of RBV
@@ -367,9 +367,9 @@ def main():
 	rand_readbal_array = np.array(rand_readbal).reshape(len(rand_readbal));
 	rand_mean = np.mean(rand_readbal_array)
 	
-	print >>out, "#Random mean read balance = " + str(rand_mean)
-	print >>out, "#"
-	print >>out, "#CHR\tSTART\tSTOP\tpredicted type\th1 het snp number\th1 pvalue\th3 mean readbal\th3 t-test\th3 ks-test"
+	out.write("#Random mean read balance = " + str(rand_mean) + "\n")
+	out.write("#\n")
+	out.write("#CHR\tSTART\tSTOP\tpredicted type\th1 het snp number\th1 pvalue\th3 mean readbal\th3 t-test\th3 ks-test\n")
 	
 	CNVs=open(args.CNV_bed).readlines()
 	
@@ -410,8 +410,6 @@ def main():
 					if (start<=coord<=stop):
 						window_size+=1
 			
-			print window_size
-			
 			if window_size > 0:
 				random_windows = make_random_windows.intervals_window(total_intervals, args.window_permutations, window_size)
 			
@@ -435,7 +433,7 @@ def main():
 			
 			random_windows = make_random_windows.gaps_windows(ref_fai, total_gap_sites, args.window_permutations, window_size)
 		
-		print "[" + str(datetime.now()) + "] Random window generation - CNV"+str(permutation)+" complete."
+		sys.stdout.write("[" + str(datetime.now()) + "] Random window generation - CNV"+str(permutation)+" complete.\n")
 		
 		window_het_count = []
 		for w in range(len(random_windows)):		
@@ -453,7 +451,7 @@ def main():
 			
 			no_rand_SNP_warning = "WARNING: CNV" + str(permutation) + " all random windows of this length contain no heterozygous SNPs. CNV too small or too few permuations"
 			
-			print "[" + str(datetime.now()) + "] " + no_rand_SNP_warning
+			sys.stderr.write("[" + str(datetime.now()) + "] " + no_rand_SNP_warning + "\n")
 			
 			warning_messages.append(no_rand_SNP_warning)
 			warning_count += 1
@@ -474,7 +472,7 @@ def main():
 			
 			no_CNV_SNP_warning = "WARNING: CNV" + str(permutation) + " contains no heterozygous SNPs, unable to perform duplication analyses"
 			
-			print "[" + str(datetime.now()) + "] " + no_CNV_SNP_warning
+			sys.stderr.write("[" + str(datetime.now()) + "] " + no_CNV_SNP_warning + "\n")
 			
 			warning_messages.append(no_CNV_SNP_warning)
 			warning_count += 1
@@ -496,7 +494,7 @@ def main():
 				
 				out.write("nan\t")
 				
-				print "[" + str(datetime.now()) + "] " + single_CNV_hetSNP_warning
+				sys.stderr.write("[" + str(datetime.now()) + "] " + single_CNV_hetSNP_warning + "\n")
 				
 				warning_messages.append(single_CNV_hetSNP_warning)
 				warning_count += 1
@@ -512,10 +510,11 @@ def main():
 		
 	out.close()
 	
-	print "------------------------------------------------------------------------------------------"
-	print "[" + str(datetime.now()) + "] Done. There were " + str(warning_count) + " WARNING messages, repeated below."
-	print "\n".join([str(x) for x in warning_messages])
-	print "------------------------------------------------------------------------------------------"
+	sys.stdout.write("------------------------------------------------------------------------------------------\n")
+	sys.stdout.write("------------------------------------------------------------------------------------------\n")
+	sys.stdout.write("[" + str(datetime.now()) + "] Done. There were " + str(warning_count) + " WARNING messages.\n")
+	#sys.stdout.write("\n".join([str(x) for x in warning_messages]) + "\n")
+	sys.stdout.write("------------------------------------------------------------------------------------------\n")
 		
 
 
