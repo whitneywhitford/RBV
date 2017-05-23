@@ -326,7 +326,7 @@ def main():
 	
 	sys.stdout.write("------------------------------------------------------------------------------------------\n")
 	sys.stdout.write("[" + str(datetime.now()) + "] Read Balance Validator (RBV) v0.1-commit_id\n")
-	sys.stdout.write("[" + str(datetime.now()) + "] Copyright (c) 2017 Whitney Chelsea Whitford\n")
+	sys.stdout.write("[" + str(datetime.now()) + "] Copyright (c) 2017 Whitney Whitford\n")
 	sys.stdout.write("[" + str(datetime.now()) + "] For support and documentation go to https://github.com/whitneywhitford/RBV\n")
 	sys.stdout.write("[" + str(datetime.now()) + "] Program Args: " + str(sys.argv) + "\n")
 	sys.stdout.write("------------------------------------------------------------------------------------------\n")
@@ -412,6 +412,7 @@ def main():
 			
 			if window_size > 0:
 				random_windows = make_random_windows.intervals_window(total_intervals, args.window_permutations, window_size)
+				print random_windows
 			
 			else:
 				zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)
