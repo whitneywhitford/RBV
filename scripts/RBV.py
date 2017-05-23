@@ -152,7 +152,6 @@ def rand_het_sites(no_of_samples,vcf_file):
 				comment_count += 1
 			else:
 				a += 1
-	#print comment_count
 
 	# Choose variant
 	var_lines = []
@@ -381,6 +380,7 @@ def main():
 	elif args.gap_bed is not None:
 		gap_sites = make_random_windows.gaps(args.gap_bed)
 		total_gap_sites = make_random_windows.gaps_total(gap_sites,CNVs)
+		
 	else:
 		gap_sites = {}
 		zeros = [0,0]
@@ -419,20 +419,22 @@ def main():
 		
 		else:
 			window_size = CNV_stop - CNV_start + 1
-			"""print window_size
+			
 			for coord in range(CNV_start,CNV_stop+1):
 				for start,stop in gap_sites[CNV_chr]:
 					if start<=coord<=stop:
-						print start
-						print coord
-						print stop
 						window_size-=1
 						break #if encounters any gap, nucleotide won't be included in window size
 			
-			print window_size"""
+			if window_size > 0:
+				random_windows = make_random_windows.gaps_windows(ref_fai, total_gap_sites, args.window_permutations, window_size)
+			
+			else:
+				zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)
+				random_windows = [zero_window]
 			
 			random_windows = make_random_windows.gaps_windows(ref_fai, total_gap_sites, args.window_permutations, window_size)
-		
+			
 		sys.stdout.write("[" + str(datetime.now()) + "] Random window generation - CNV"+str(permutation)+" complete.\n")
 		
 		window_het_count = []
