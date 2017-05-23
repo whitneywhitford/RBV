@@ -83,12 +83,15 @@ def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,total_gaps):
 		# Exclude inaccessible regions
 		include="T"
 		for start,stop in total_gaps[chr]:
+			#window straddles the whole gap
 			if (point <= start) and ((point+size)>= stop):
 				include="F"
 				break #if encounters any gap, window won't be included
-			if (start<=point<=stop or start<=(point+size)<=stop):
+			elif (start<=point<=stop or start<=(point+size)<=stop):
 				include="F"
 				break #if encounters any gap, window won't be included
+			"""elif ((point+size)<start) #need to include a merge step in the gaps first
+				break"""
 		
 		# Return points in accessible regions
 		if include=="T":
@@ -189,7 +192,10 @@ def intervals_rand_sites(no_of_samples,window_size,chr_interval_len,chr_lst,inte
 		window_count = 0
 		
 		for start,stop in interval_list[chr]:
-			if start<=point<=stop:	#start found
+			if (past_start == False) and (point < start):
+				break
+				
+			elif start<=point<=stop:	#start found
 				window_count = (stop - point) + 1
 				past_start = True
 
