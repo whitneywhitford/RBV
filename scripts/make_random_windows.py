@@ -14,6 +14,7 @@ def gaps(gapfile):
 	# Import chromosome gaps
 	gap_raw=open(gapfile).readlines()
 	gaps={}
+	
 	for i in range(len(gap_raw)):
 		chr,start,stop,type=gap_raw[i].strip().split()
 		gap_region=[int(start),int(stop)]
@@ -22,18 +23,30 @@ def gaps(gapfile):
 		else:
 			gaps[chr]=[gap_region]
 	
+	#if no gaps in any of chr 1-23, then 0,0 included so can be called in random generation. If need to limit to chromosomes, then use intervals option
+	zeros = [0,0]
+	for gap_chr in range(1,23):
+		if str(gap_chr) not in gaps:
+			gaps[str(gap_chr)]=[zeros]
+
 	return gaps
 
 def gaps_total(gaplist,CNVs):
+
+	total_gaps = deepcopy(gaplist)
+	
 	for i in range(len(CNVs)):
 		chr,start,stop,type=CNVs[i].strip().split()
 		CNV_region=[int(start),int(stop)]
-		if chr in gaplist:
-			gaplist[chr].append(CNV_region)
+		if chr in total_gaps:
+			total_gaps[chr].append(CNV_region)
 		else:
-			gaplist[chr]=[CNV_region]
-	
-	return gaplist
+			total_gaps[chr]=[CNV_region]
+		
+		for chr in total_gaps:
+			total_gaps[chr] = sorted(total_gaps[chr])
+		
+	return total_gaps
 
 #chr_length modified to fit Readbal
 def gaps_chr_length(ref_fai):	
@@ -57,7 +70,7 @@ def gaps_chr_length(ref_fai):
 	return chr_len, chr_lst
 
 
-def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,gaps):
+def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,total_gaps):
 	from random import choice,uniform,seed
 	seed(None)
 	count=1
@@ -69,7 +82,7 @@ def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,gaps):
 		
 		# Exclude inaccessible regions
 		include="T"
-		for start,stop in gaps[chr]:
+		for start,stop in total_gaps[chr]:
 			if (point <= start) and ((point+size)>= stop):
 				include="F"
 				break #if encounters any gap, window won't be included
@@ -83,10 +96,10 @@ def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,gaps):
 			count+=1
 
 
-def gaps_make_random(no_of_samples,size,chr_len,chr_lst,gaps):
+def gaps_make_random(no_of_samples,size,chr_len,chr_lst,total_gaps):
 	from operator import itemgetter
 	
-	a=gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,gaps)
+	a=gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,total_gaps)
 	b=sort_coords(a)
 	
 	return b
@@ -221,10 +234,10 @@ def sort_coords(coords,cols=itemgetter(1,2)):
 
 		
 #main functions
-def gaps_windows(ref_fai, gaps, no_of_samples, size):
+def gaps_windows(ref_fai, total_gaps, no_of_samples, size):
 	chr_len,chr_lst=gaps_chr_length(ref_fai)
 	
-	a=gaps_make_random(no_of_samples,size,chr_len,chr_lst,gaps)
+	a=gaps_make_random(no_of_samples,size,chr_len,chr_lst,total_gaps)
 	random_windows = make_bed(a)
 	return random_windows
 	
