@@ -412,7 +412,6 @@ def main():
 			
 			if window_size > 0:
 				random_windows = make_random_windows.intervals_window(total_intervals, args.window_permutations, window_size)
-				print random_windows
 			
 			else:
 				zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)
