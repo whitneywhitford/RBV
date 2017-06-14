@@ -139,7 +139,7 @@ def parse_args():
 
 #make_random_vars
 	
-def rand_het_sites(no_of_samples,vcf_file):	
+def rand_het_sites(no_of_samples,vcf_file,chr_prefix):	
 	from random import randrange
 	count=1
 
@@ -165,7 +165,10 @@ def rand_het_sites(no_of_samples,vcf_file):
 		
 		str_chroms = []
 		for num in range(1,23):
-			str_chroms.append(str(num))
+			if chr_prefix == True:
+				str_chroms.append("chr"+str(num))
+			else:
+				str_chroms.append(str(num))
 
 		if chr not in str_chroms:
 			continue
@@ -300,9 +303,9 @@ def readbal(variant_lines,qualCutoff,calling_method):
 	return readBalance
 
 	
-def random_readbal(no_of_samples,vcf_file,qualCutoff,calling_method):
+def random_readbal(no_of_samples,vcf_file,qualCutoff,calling_method,chr_prefix):
 	
-	variant_lines = rand_het_sites(no_of_samples,vcf_file)
+	variant_lines = rand_het_sites(no_of_samples,vcf_file,chr_prefix)
 	
 	random_readbal = readbal(variant_lines,qualCutoff,calling_method)
 	
@@ -362,7 +365,14 @@ def main():
 	#random readbal - perform once per run of RBV
 	bzip_vcf = prep_vcf(args.vcf, args.output_dir)	#check if need to bgzip and tabix
 	
-	rand_readbal = random_readbal(args.variant_permutations,args.vcf,args.variant_quality_cutoff,args.calling_method)
+	chr_prefix = False
+	
+	if args.interval_file is None:
+		ref_file = open(ref_fai).readlines()
+		if ref_file[0].startswith("chr"):
+			chr_prefix = True
+	
+	rand_readbal = random_readbal(args.variant_permutations,args.vcf,args.variant_quality_cutoff,args.calling_method,chr_prefix)
 	rand_readbal_array = np.array(rand_readbal).reshape(len(rand_readbal));
 	rand_mean = np.mean(rand_readbal_array)
 	
@@ -378,15 +388,16 @@ def main():
 		total_intervals = make_random_windows.random_intervals(intervals, CNV_list)
 		
 	elif args.gap_bed is not None:
-		gap_sites = make_random_windows.gaps(args.gap_bed)
-		total_gap_sites = make_random_windows.gaps_total(gap_sites,CNVs)
+		gap_sites = make_random_windows.gaps(args.gap_bed,chr_prefix)
+		total_gap_sites = make_random_windows.gaps_total(gap_sites,CNVs,chr_prefix)
 		
 	else:
 		gap_sites = {}
 		zeros = [0,0]
 		for gap_chr in range(1,23):
 			gap_sites[str(gap_chr)]=[zeros]
-		total_gap_sites = make_random_windows.gaps_total(gap_sites,CNVs)
+			
+		total_gap_sites = make_random_windows.gaps_total(gap_sites,CNVs,chr_prefix)
 	
 	#For each CNV
 	for i in range(len(CNVs)):
@@ -421,19 +432,24 @@ def main():
 			window_size = CNV_stop - CNV_start + 1
 			
 			for coord in range(CNV_start,CNV_stop+1):
-				for start,stop in gap_sites[CNV_chr]:
+				if chr_prefix == True:
+					gaps_CNV_chr = CNV_chr.replace("chr", '', 1)
+				else:
+					gaps_CNV_chr = CNV_chr
+				
+				for start,stop in gap_sites[gaps_CNV_chr]:
 					if start<=coord<=stop:
 						window_size-=1
 						break #if encounters any gap, nucleotide won't be included in window size
 			
 			if window_size > 0:
-				random_windows = make_random_windows.gaps_windows(ref_fai, total_gap_sites, args.window_permutations, window_size)
+				random_windows = make_random_windows.gaps_windows(ref_file, total_gap_sites, chr_prefix, args.window_permutations, window_size)
 			
 			else:
 				zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)
 				random_windows = [zero_window]
 			
-			random_windows = make_random_windows.gaps_windows(ref_fai, total_gap_sites, args.window_permutations, window_size)
+			#random_windows = make_random_windows.gaps_windows(ref_file, total_gap_sites, chr_prefix, args.window_permutations, window_size)
 			
 		sys.stdout.write("[" + str(datetime.now()) + "] Random window generation - CNV"+str(permutation)+" complete.\n")
 		

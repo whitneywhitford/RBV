@@ -10,13 +10,18 @@ from operator import itemgetter
 #define functions
 
 #WGS no intervals functions
-def gaps(gapfile):
+def gaps(gapfile, chr_prefix):
 	# Import chromosome gaps
 	gap_raw=open(gapfile).readlines()
 	gaps={}
 	
 	for i in range(len(gap_raw)):
-		chr,start,stop,type=gap_raw[i].strip().split()
+		chr_raw,start,stop,type=gap_raw[i].strip().split()
+		if chr_prefix == True:
+			chr = chr_raw.replace("chr", '', 1)
+		else:
+			chr = chr_raw
+			
 		gap_region=[int(start),int(stop)]
 		if chr in gaps:
 			gaps[chr].append(gap_region)
@@ -31,12 +36,16 @@ def gaps(gapfile):
 
 	return gaps
 
-def gaps_total(gaplist,CNVs):
+def gaps_total(gaplist,CNVs,chr_prefix):
 
 	total_gaps = deepcopy(gaplist)
 	
 	for i in range(len(CNVs)):
-		chr,start,stop,type=CNVs[i].strip().split()
+		chr_raw,start,stop,type=CNVs[i].strip().split()
+		if chr_prefix == True:
+			chr = chr_raw.replace("chr", '', 1)
+		else:
+			chr = chr_raw
 		CNV_region=[int(start),int(stop)]
 		if chr in total_gaps:
 			total_gaps[chr].append(CNV_region)
@@ -49,15 +58,18 @@ def gaps_total(gaplist,CNVs):
 	return total_gaps
 
 #chr_length modified to fit Readbal
-def gaps_chr_length(ref_fai):	
-	reffile = open(ref_fai).readlines()
+def gaps_chr_length(ref_fai, chr_prefix):
 	chr_len={}
 	chroms = str(list(range(1,23)))
-	for i in range(len(reffile)):
-		raw_chr,length,bite_index,bases_pl,bites_pl=reffile[i].strip().split()
-		if raw_chr in chroms:
+	for i in range(len(ref_fai)):
+		raw_chr,length,bite_index,bases_pl,bites_pl=ref_fai[i].strip().split()
+		if chr_prefix == True:
+			int_chr = raw_chr.replace("chr", '', 1)
+		else:
+			int_chr = raw_chr
+		if int_chr in chroms:
 			chr = str(raw_chr)
-			chr_len[chr]=int(length)
+			chr_len[int_chr]=int(length)
 		else:
 			continue
 	
@@ -66,7 +78,7 @@ def gaps_chr_length(ref_fai):
 		chr_rep=[str(chr)] * int(round(chr_len[str(chr)]/10000000,0))
 		for rep in chr_rep:
 			chr_lst.append(rep)
-	
+
 	return chr_len, chr_lst
 
 
@@ -218,10 +230,15 @@ def intervals_make_random(no_of_samples,size,chr_interval_len,chr_lst,interval_l
 
 	
 #shared functions
-def make_bed(gen_out):
+def make_bed(gen_out, chr_prefix):
 	windows = []
 	for count,chr,start,end in gen_out:
-		windows.append(str(chr) +" "+ str(start) +" "+ str(end) +" "+ str(count))
+
+		if chr_prefix == True:
+			windows.append("chr" + str(chr) +" "+ str(start) +" "+ str(end) +" "+ str(count))
+		else:
+			windows.append(str(chr) +" "+ str(start) +" "+ str(end) +" "+ str(count))
+		
 	return windows
 
 def sort_coords(coords,cols=itemgetter(1,2)):
@@ -240,18 +257,18 @@ def sort_coords(coords,cols=itemgetter(1,2)):
 
 		
 #main functions
-def gaps_windows(ref_fai, total_gaps, no_of_samples, size):
-	chr_len,chr_lst=gaps_chr_length(ref_fai)
+def gaps_windows(ref_fai, total_gaps, chr_prefix, no_of_samples, size):
+	chr_len,chr_lst=gaps_chr_length(ref_fai, chr_prefix)
 	
 	a=gaps_make_random(no_of_samples,size,chr_len,chr_lst,total_gaps)
-	random_windows = make_bed(a)
+	random_windows = make_bed(a,chr_prefix)
 	return random_windows
 	
 def intervals_window(interval_list, no_of_samples, size):	
 	chr_interval_len,chr_lst=intervals_chr_length(interval_list)
 	
 	a=intervals_make_random(no_of_samples,size,chr_interval_len,chr_lst,interval_list)
-	random_windows = make_bed(a)
+	random_windows = make_bed(a,chr_prefix)
 	return random_windows
 
 
