@@ -122,11 +122,15 @@ def gaps_make_random(no_of_samples,size,chr_len,chr_lst,total_gaps):
 		
 		
 #intervals functions
-def intervals(intervalfile):
+def intervals(intervalfile,chr_prefix):
 	interval_raw=open(intervalfile).readlines()
 	intervals={}
 	for i in range(len(interval_raw)):
-		chr,start,stop,type=interval_raw[i].strip().split()
+		chr_raw,start,stop,type=interval_raw[i].strip().split()
+		if chr_prefix == True:
+			chr = chr_raw.replace("chr", '', 1)
+		else:
+			chr = chr_raw
 		interval_region=[int(start),int(stop)]
 		if chr in intervals:
 			intervals[chr].append(interval_region)
@@ -136,11 +140,14 @@ def intervals(intervalfile):
 	return intervals	
 
 	
-def CNV_list(CNVfile):
-	CNV_raw=open(CNVfile).readlines()
+def CNV_list(CNVlist,chr_prefix):
 	CNVs={}
-	for i in range(len(CNV_raw)):
-		chr,start,stop,type=CNV_raw[i].strip().split()
+	for i in range(len(CNVlist)):
+		chr_raw,start,stop,type=CNVlist[i].strip().split()
+		if chr_prefix == True:
+			chr = chr_raw.replace("chr", '', 1)
+		else:
+			chr = chr_raw
 		CNV_region=[int(start),int(stop)]
 		if chr in CNVs:
 			CNVs[chr].append(CNV_region)
@@ -264,7 +271,7 @@ def gaps_windows(ref_fai, total_gaps, chr_prefix, no_of_samples, size):
 	random_windows = make_bed(a,chr_prefix)
 	return random_windows
 	
-def intervals_window(interval_list, no_of_samples, size):	
+def intervals_window(interval_list, chr_prefix, no_of_samples, size):	
 	chr_interval_len,chr_lst=intervals_chr_length(interval_list)
 	
 	a=intervals_make_random(no_of_samples,size,chr_interval_len,chr_lst,interval_list)

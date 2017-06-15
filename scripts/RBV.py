@@ -365,11 +365,16 @@ def main():
 	#random readbal - perform once per run of RBV
 	bzip_vcf = prep_vcf(args.vcf, args.output_dir)	#check if need to bgzip and tabix
 	
+	CNVs=open(args.CNV_bed).readlines()
+	
 	chr_prefix = False
 	
 	if args.interval_file is None:
 		ref_file = open(ref_fai).readlines()
 		if ref_file[0].startswith("chr"):
+			chr_prefix = True
+	else:
+		if CNVs[0].startswith("chr"):
 			chr_prefix = True
 	
 	rand_readbal = random_readbal(args.variant_permutations,args.vcf,args.variant_quality_cutoff,args.calling_method,chr_prefix)
@@ -380,11 +385,9 @@ def main():
 	out.write("#\n")
 	out.write("#CHR\tSTART\tSTOP\tpredicted type\th1 het snp number\th1 pvalue\th3 mean readbal\th3 t-test\th3 ks-test\n")
 	
-	CNVs=open(args.CNV_bed).readlines()
-	
 	if args.interval_file is not None:
-		intervals = make_random_windows.intervals(args.interval_file)
-		CNV_list = make_random_windows.CNV_list(args.CNV_bed)
+		intervals = make_random_windows.intervals(args.interval_file,chr_prefix)
+		CNV_list = make_random_windows.CNV_list(CNVs,chr_prefix)
 		total_intervals = make_random_windows.random_intervals(intervals, CNV_list)
 		
 	elif args.gap_bed is not None:
@@ -417,12 +420,16 @@ def main():
 		if args.interval_file is not None:
 			window_size = 0
 			for coord in range(CNV_start,CNV_stop+1):
-				for start,stop in intervals[CNV_chr]:
+				if chr_prefix == True:
+					intervals_CNV_chr = CNV_chr.replace("chr", '', 1)
+				else:
+					intervals_CNV_chr = CNV_chr
+				for start,stop in intervals[intervals_CNV_chr]:
 					if (start<=coord<=stop):
 						window_size+=1
 			
 			if window_size > 0:
-				random_windows = make_random_windows.intervals_window(total_intervals, args.window_permutations, window_size)
+				random_windows = make_random_windows.intervals_window(total_intervals, chr_prefix, args.window_permutations, window_size)
 			
 			else:
 				zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)
