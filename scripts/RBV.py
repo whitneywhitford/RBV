@@ -40,7 +40,7 @@ def parse_args():
 	parser = argparse.ArgumentParser(description="RBV")
 
 	parser.add_argument(
-		"--ref", required=True,
+		"--ref", default=None,
 		help="REQUIRED. Path to reference sequence (including file name).")
 	
 	parser.add_argument(
@@ -119,6 +119,11 @@ def parse_args():
 		sys.exit(
 			"ERROR: Interval file required for Whole Exome Sequencing"
 			"RBV analysis")
+	
+	if args.ref == None and args.interval_file == None:
+		sys.exit(
+			"ERROR: Reference file required if a interval file is not supplied"
+			)
 	
 	if os.path.isdir(args.output_dir):
 		sys.exit(
@@ -232,37 +237,47 @@ def empirical_pvalue(window_het_snps, vcf_outfile, num_window_samples):
 	return sample_het_snps,sample_cum_sum_pvalue
 
 def haplotypecaller_vcf(variant_cols):
-	allele1 = variant_cols[9].split(':')[1].split(',')[0]
-	allele2 = variant_cols[9].split(':')[1].split(',')[1]
+	format = variant_cols[8].split(':')
+	alleles_index = format.index("AD")
+	allele1 = variant_cols[9].split(':')[alleles_index].split(',')[0]
+	allele2 = variant_cols[9].split(':')[alleles_index].split(',')[1]
 	
 	return allele1, allele2
 	
 def samtools_vcf(variant_cols):
-	allele1F = variant_cols[7].split(';')[12].split('=')[1].split(',')[0]
-	allele1R = variant_cols[7].split(';')[12].split('=')[1].split(',')[1]
+	info = variant_cols[7].replace('=',';').split(';')
+	reads_index = info.index("DP4") + 1
+	alleles = info[reads_index].split(',')
+	
+	allele1F = int(alleles[0])
+	allele1R = int(alleles[1])
 	allele1 = allele1F + allele1R
-	allele2F = variant_cols[7].split(';')[12].split('=')[1].split(',')[2]
-	allele2R = variant_cols[7].split(';')[12].split('=')[1].split(',')[3]
+	allele2F = int(alleles[2])
+	allele2R = int(alleles[3])
 	allele2 = allele2F + allele2R
 	
-	return allele1, allele2
+	return str(allele1), str(allele2)
 	
 def freebayes_vcf(variant_cols):
-	allele1F = variant_cols[7].split(';')[12].split('=')[1].split(',')[0]
-	allele1R = variant_cols[7].split(';')[12].split('=')[1].split(',')[1]
-	allele1 = allele1F + allele1R
-	allele2F = variant_cols[7].split(';')[12].split('=')[1].split(',')[2]
-	allele2R = variant_cols[7].split(';')[12].split('=')[1].split(',')[3]
-	allele2 = allele2F + allele2R
-	
-	return allele1, allele2
-	
-def platypus_vcf(variant_cols):
-	allele1 = int(cols[7].split(';')[17].split('=')[1])
-	total =int(cols[7].split(';')[14].split('=')[1])
+	format = variant_cols[8].split(':')
+	allele1_index = format.index("RO")
+	allele1 = int(variant_cols[9].split(':')[allele1_index])
+	total_index = format.index("DP")
+	total = int(variant_cols[9].split(':')[total_index])
 	allele2 = total - allele1
 	
-	return allele1, allele2
+	return str(allele1), str(allele2)
+	
+def platypus_vcf(variant_cols):
+	info = variant_cols[7].replace(';','=').split('=')
+	allele1_index = info.index("TR") + 1
+	allele1_all = info[allele1_index]
+	allele1 = int(allele1_all.split(',')[0])
+	total_index = info.index("TC") + 1
+	total = int(info[total_index])
+	allele2 = total - allele1
+	
+	return str(allele1), str(allele2)
 	
 	
 def readbal(variant_lines,qualCutoff,calling_method):
@@ -342,17 +357,17 @@ def main():
 	tmp = str(args.output_dir) + "/tmp"
 	os.mkdir(tmp)
 
-
-	ref_fai = str(args.ref) + ".fai"	#check if all fai are just fasta.fai/fa.fai
-	
-	if not os.path.isfile(ref_fai):
-		os.system("samtools faidx  " + args.ref)
-		ref_fai_base = os.path.basename(ref_fai)
+	if args.ref is not None:
+		ref_fai = str(args.ref) + ".fai"	#check if all fai are just fasta.fai/fa.fai
 		
-		old_ref_fai = ref_fai
-		ref_fai = os.path.join(args.output_dir, "tmp", ref_fai_base)
-		
-		os.rename(old_ref_fai, ref_fai)
+		if not os.path.isfile(ref_fai):
+			os.system("samtools faidx  " + args.ref)
+			ref_fai_base = os.path.basename(ref_fai)
+			
+			old_ref_fai = ref_fai
+			ref_fai = os.path.join(args.output_dir, "tmp", ref_fai_base)
+			
+			os.rename(old_ref_fai, ref_fai)
 	
 	out_file = os.path.join(args.output_dir, "{}_RBV.txt".format(args.sample_id))
 	
