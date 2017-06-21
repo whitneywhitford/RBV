@@ -12,11 +12,18 @@ from operator import itemgetter
 #WGS no intervals functions
 def gaps(gapfile, chr_prefix):
 	# Import chromosome gaps
-	gap_raw=open(gapfile).readlines()
+	gaplines = open(gapfile, 'r')
+	gap_raw = []
+	for line in gaplines:
+		if line.startswith("@"):
+			continue
+		else:
+			gap_raw.append(line)
+
 	gaps={}
 	
 	for i in range(len(gap_raw)):
-		chr_raw,start,stop,type=gap_raw[i].strip().split()
+		chr_raw,start,stop,plus,type=gap_raw[i].strip().split()
 		if chr_prefix == True:
 			chr = chr_raw.replace("chr", '', 1)
 		else:
@@ -41,7 +48,7 @@ def gaps_total(gaplist,CNVs,chr_prefix):
 	total_gaps = deepcopy(gaplist)
 	
 	for i in range(len(CNVs)):
-		chr_raw,start,stop,type=CNVs[i].strip().split()
+		chr_raw,start,stop,plus,type=CNVs[i].strip().split()
 		if chr_prefix == True:
 			chr = chr_raw.replace("chr", '', 1)
 		else:
@@ -123,10 +130,17 @@ def gaps_make_random(no_of_samples,size,chr_len,chr_lst,total_gaps):
 		
 #intervals functions
 def intervals(intervalfile,chr_prefix):
-	interval_raw=open(intervalfile).readlines()
+	intervallines = open(intervalfile, 'r')
+	interval_raw = []
+	for line in intervallines:
+		if line.startswith("@"):
+			continue
+		else:
+			interval_raw.append(line)
+	
 	intervals={}
 	for i in range(len(interval_raw)):
-		chr_raw,start,stop,type=interval_raw[i].strip().split()
+		chr_raw,start,stop,plus,type=interval_raw[i].strip().split()
 		if chr_prefix == True:
 			chr = chr_raw.replace("chr", '', 1)
 		else:
@@ -143,7 +157,7 @@ def intervals(intervalfile,chr_prefix):
 def CNV_list(CNVlist,chr_prefix):
 	CNVs={}
 	for i in range(len(CNVlist)):
-		chr_raw,start,stop,type=CNVlist[i].strip().split()
+		chr_raw,start,stop,plus,type=CNVlist[i].strip().split()
 		if chr_prefix == True:
 			chr = chr_raw.replace("chr", '', 1)
 		else:

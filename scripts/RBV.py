@@ -44,18 +44,18 @@ def parse_args():
 		help="REQUIRED. Path to reference sequence (including file name).")
 	
 	parser.add_argument(
-		"--CNV_bed", required=True,
-		help="REQUIRED. Bed file containing targets to use in CNV analyses "
-		"Must be typical bed format, 0-based indexing, with the first four "
-		"columns the chromosome name, start coordinate, stop coordinate,"
-		"and predicted CNV type.")
+		"--CNV_file", required=True,
+		help="REQUIRED. Picard-style interval_list containing targets to use in CNV analyses."
+		"Must be typical interval_list format: 1-based indexing, with the six"
+		"columnsbeing the chromosome name, start coordinate, stop coordinate,"
+		"plus sign, and predicted CNV type.")
 
 	parser.add_argument(
-		"--gap_bed", default=None,
-		help="Bed file containing gaps in the reference to mask "
-		"for random generation. Must be typical bed format, 0-based indexing,"
-		"with the first four columns the chromosome name, start coordinate,"
-		"stop coordinate, and predicted type.")
+		"--gap_file", default=None,
+		help="Picard-style interval_list containing gaps in the reference to"
+		"mask for random generation. Must be typical interval_file format:"
+		"1-based, indexing, with the six columns being the chromosome name,"
+		"start coordinate, stop coordinate, plus sign, and type.")
 		
 	parser.add_argument(
 		"--vcf", required=True,
@@ -95,9 +95,10 @@ def parse_args():
 		
 	parser.add_argument(
 		"--interval_file", default=None,
-		help="Bed file containing interval file used for variant calling."
-		"Must be typical bed format, 0-based indexing, with the first three "
-		"columns the chromosome name, start coordinate, stop coordinate."
+		help="Picard-style interval_list containing interval coordinates"
+		"used for variant calling. Must be typical interval_list format: 1-based"
+		"indexing, with the six columns being the chromosome name, start"
+		"coordinate, stop coordinate, plus sign, and type."
 		"REQUIRED for if using WES seq_type.")
 	
 	parser.add_argument(
@@ -380,7 +381,13 @@ def main():
 	#random readbal - perform once per run of RBV
 	bzip_vcf = prep_vcf(args.vcf, args.output_dir)	#check if need to bgzip and tabix
 	
-	CNVs=open(args.CNV_bed).readlines()
+	CNVlines = open(args.CNV_file, 'r')
+	CNVs = []
+	for line in CNVlines:
+		if line.startswith("@"):
+			continue
+		else:
+			CNVs.append(line)
 	
 	chr_prefix = False
 	
@@ -395,8 +402,12 @@ def main():
 	rand_readbal = random_readbal(args.variant_permutations,args.vcf,args.variant_quality_cutoff,args.calling_method,chr_prefix)
 	rand_readbal_array = np.array(rand_readbal).reshape(len(rand_readbal));
 	rand_mean = np.mean(rand_readbal_array)
+	#rand_stddev  = np.std(rand_readbal_array)
+	#plus3stddev = rand_mean + (3 * rand_stddev)
+	#minus3stddev = rand_mean - (3 * rand_stddev)
 	
 	out.write("#Random mean read balance = " + str(rand_mean) + "\n")
+	#"\tStd dev = " + str(rand_stddev) + "\t3 Std dev from mean = " + str(plus3stddev) +  " " + str(minus3stddev) + 
 	out.write("#\n")
 	out.write("#CHR\tSTART\tSTOP\tpredicted type\th1 het snp number\th1 pvalue\th3 mean readbal\th3 t-test\th3 ks-test\n")
 	
@@ -405,8 +416,8 @@ def main():
 		CNV_list = make_random_windows.CNV_list(CNVs,chr_prefix)
 		total_intervals = make_random_windows.random_intervals(intervals, CNV_list)
 		
-	elif args.gap_bed is not None:
-		gap_sites = make_random_windows.gaps(args.gap_bed,chr_prefix)
+	elif args.gap_file is not None:
+		gap_sites = make_random_windows.gaps(args.gap_file,chr_prefix)
 		total_gap_sites = make_random_windows.gaps_total(gap_sites,CNVs,chr_prefix)
 		
 	else:
@@ -419,7 +430,7 @@ def main():
 	
 	#For each CNV
 	for i in range(len(CNVs)):
-		CNV_chr,raw_CNV_start,raw_CNV_stop,CNV_type=CNVs[i].strip().split()
+		CNV_chr,raw_CNV_start,raw_CNV_stop,plus,CNV_type=CNVs[i].strip().split()
 		CNV_start = int(raw_CNV_start)
 		CNV_stop = int(raw_CNV_stop)
 		
@@ -563,13 +574,5 @@ if __name__=='__main__':
 
 
 
-
-
-
-#Program initialisation message
-#Program completion message
-
-
 #total depth cutoff for vcf
 
-#bed files are 0 based (first base is zero) therefore, CNV and gaps should be 1 based (.txt?)
