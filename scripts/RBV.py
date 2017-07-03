@@ -79,6 +79,11 @@ def parse_args():
 		"equal to this value. Default is 20.")
 		
 	parser.add_argument(
+		"--read_depth_cutoff", "-rdc", type=int, default=10,
+		help="Consider all SNPs with a read depth greater than or "
+		"equal to this value. Default is 10.")
+		
+	parser.add_argument(
 		"--variant_permutations", type=int, default=10000,
 		help="Number of permutations to use for heterozygous read balance "
 		"analyses. Default is 10000")
@@ -193,7 +198,7 @@ def vcf_fetch(vcf_infile,vcf_outfile, chr, start, stop):
 	vcf_writer.close()
 
 	
-def het_count(vcf_file):
+def het_count(vcf_file,qualCutoff,readdepthCutoff,calling_method):
 	het_count = 0
 	vcf = open(vcf_file).readlines()
 	for i in range(len(vcf)):
@@ -201,10 +206,23 @@ def het_count(vcf_file):
 		if line.startswith('#'):
 			continue
 		cols = line.strip().split()
-		call = cols[9].split(':')
-		vars_raw = call[0].replace('|', '/')
+		GT = cols[9].split(':')[0]
+		vars_raw = GT.replace('|', '/')
 		vars = vars_raw.split('/')
 		if vars[0] != vars[1]:
+			qual = float(cols[5])
+			if qual < qualCutoff:
+				continue
+			if GT == './.' or GT == '.|.':
+				continue
+			
+			allele_reads = globals()[calling_method + "_vcf"]
+			allele1, allele2 = allele_reads(cols)
+			
+			readdepth = int(allele1) + int(allele2)
+			if readdepth < readdepthCutoff:
+				continue
+
 			het_count += 1
 		else:
 			continue
@@ -214,9 +232,9 @@ def het_count(vcf_file):
 	return het_count
 
 	
-def empirical_pvalue(window_het_snps, vcf_outfile, num_window_samples):
+def empirical_pvalue(window_het_snps, vcf_outfile, qualCutoff ,readdepthCutoff, calling_method, num_window_samples):
 	sample_cum_sum = 0
-	sample_het_snps = het_count(vcf_outfile)
+	sample_het_snps = het_count(vcf_outfile,qualCutoff,readdepthCutoff,calling_method)
 	
 	if sample_het_snps > max(window_het_snps):
 		sample_cum_sum_pvalue = 1.000
@@ -281,7 +299,7 @@ def platypus_vcf(variant_cols):
 	return str(allele1), str(allele2)
 	
 	
-def readbal(variant_lines,qualCutoff,calling_method):
+def readbal(variant_lines,qualCutoff,readdepthCutoff,calling_method):
 	
 	readBalance = []
 	
@@ -304,6 +322,12 @@ def readbal(variant_lines,qualCutoff,calling_method):
 			
 			allele_reads = globals()[calling_method + "_vcf"]
 			allele1, allele2 = allele_reads(cols)
+			
+			readdepth = int(allele1) + int(allele2)
+			
+			if readdepth < readdepthCutoff:
+				continue
+			
 			if ',' in allele1 or ',' in allele2:
 				continue
 			if float(allele1) + float(allele2) == 0:
@@ -319,11 +343,11 @@ def readbal(variant_lines,qualCutoff,calling_method):
 	return readBalance
 
 	
-def random_readbal(no_of_samples,vcf_file,qualCutoff,calling_method,chr_prefix):
+def random_readbal(no_of_samples,vcf_file,qualCutoff,readdepthCutoff,calling_method,chr_prefix):
 	
 	variant_lines = rand_het_sites(no_of_samples,vcf_file,chr_prefix)
 	
-	random_readbal = readbal(variant_lines,qualCutoff,calling_method)
+	random_readbal = readbal(variant_lines,qualCutoff,readdepthCutoff,calling_method)
 	
 	return random_readbal
 
@@ -399,7 +423,7 @@ def main():
 		if CNVs[0].startswith("chr"):
 			chr_prefix = True
 	
-	rand_readbal = random_readbal(args.variant_permutations,args.vcf,args.variant_quality_cutoff,args.calling_method,chr_prefix)
+	rand_readbal = random_readbal(args.variant_permutations,args.vcf,args.variant_quality_cutoff,args.read_depth_cutoff,args.calling_method,chr_prefix)
 	rand_readbal_array = np.array(rand_readbal).reshape(len(rand_readbal));
 	rand_mean = np.mean(rand_readbal_array)
 	#rand_stddev  = np.std(rand_readbal_array)
@@ -495,7 +519,7 @@ def main():
 			window_vcf_filename = "rand_vcf_file_" + str(permutation) + "_" + str(w) + ".vcf"
 			window_vcf_file = os.path.join(args.output_dir, "tmp", window_vcf_filename)
 			vcf_fetch(bzip_vcf,window_vcf_file, window_chr, window_start, window_end)
-			window_het_count.append(het_count(window_vcf_file))
+			window_het_count.append(het_count(window_vcf_file,args.variant_quality_cutoff,args.read_depth_cutoff,args.calling_method))
 			os.remove(window_vcf_file)
 		
 		if all([ v == 0 for v in window_het_count ]):
@@ -507,12 +531,12 @@ def main():
 			warning_messages.append(no_rand_SNP_warning)
 			warning_count += 1
 			
-			CNV_het_count = het_count(CNV_vcf_file)
+			CNV_het_count = het_count(CNV_vcf_file,args.variant_quality_cutoff,args.read_depth_cutoff,args.calling_method)
 			
 			out.write(str(CNV_het_count) + "\tnan\t")
 			
 		else:
-			CNV_het_count,CNV_emp_pvalue = empirical_pvalue(window_het_count, CNV_vcf_file, args.window_permutations)
+			CNV_het_count,CNV_emp_pvalue = empirical_pvalue(window_het_count, CNV_vcf_file, args.variant_quality_cutoff, args.read_depth_cutoff, args.calling_method, args.window_permutations)
 			
 			out.write(str(CNV_het_count) + "\t" + str(CNV_emp_pvalue) + "\t")
 
@@ -529,7 +553,7 @@ def main():
 			warning_count += 1
 		else:
 			CNV_vcf_lines=open(CNV_vcf_file).readlines()
-			CNV_readbal = readbal(CNV_vcf_lines,args.variant_quality_cutoff,args.calling_method)
+			CNV_readbal = readbal(CNV_vcf_lines,args.variant_quality_cutoff,args.read_depth_cutoff,args.calling_method)
 			CNV_readbal_array = np.array(CNV_readbal).reshape(len(CNV_readbal))
 			
 			CNV_readbal_array_length = len(CNV_readbal_array)
