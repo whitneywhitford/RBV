@@ -1,11 +1,8 @@
 # RBV main program
 
 import argparse
-import logging
 import os
-import subprocess
 import sys
-import pysam
 from scipy import stats
 import vcf
 import numpy as np
@@ -13,25 +10,6 @@ import make_random_windows
 from shutil import copyfile
 from shutil import rmtree
 from datetime import datetime
-
-
-
-
-"""gapfile = sys.argv[1]
-CNV_file = sys.argv[2]
-variant_permutations = int(sys.argv[3])
-vcf_file = sys.argv[4]
-qualCutoff = int(sys.argv[5])
-sample_id = sys.argv[6]
-window_permutations = int(sys.argv[7])
-ref_file = sys.argv[8]
-out_dir = sys.argv[9]"""
-
-
-
-
-
-
 
 
 def parse_args():
@@ -82,6 +60,11 @@ def parse_args():
 		"--read_depth_cutoff", "-rdc", type=int, default=10,
 		help="Consider all SNPs with a read depth greater than or "
 		"equal to this value. Default is 10.")
+		
+	parser.add_argument(
+		"--readbal_cutoff", "-rbc", type=float, default=0.65,
+		help="For deletion analyses, consider all heterozygous SNPs with a"
+		"read balance less than this value. Default is 0.65.")
 		
 	parser.add_argument(
 		"--variant_permutations", type=int, default=10000,
@@ -198,8 +181,9 @@ def vcf_fetch(vcf_infile,vcf_outfile, chr, start, stop):
 	vcf_writer.close()
 
 	
-def het_count(vcf_file,qualCutoff,readdepthCutoff,calling_method):
-	het_count = 0
+def het_count(vcf_file,qualCutoff,readdepthCutoff,readbalCutoff,calling_method):
+	del_het_count = 0
+	dup_het_count = 0
 	vcf = open(vcf_file).readlines()
 	for i in range(len(vcf)):
 		line = vcf[i]
@@ -216,27 +200,40 @@ def het_count(vcf_file,qualCutoff,readdepthCutoff,calling_method):
 			if GT == './.' or GT == '.|.':
 				continue
 			
+			dup_het_count += 1
+			
 			allele_reads = globals()[calling_method + "_vcf"]
 			allele1, allele2 = allele_reads(cols)
 			
 			readdepth = int(allele1) + int(allele2)
 			if readdepth < readdepthCutoff:
 				continue
+			
+			if ',' in allele1 or ',' in allele2:
+				continue
+			if float(allele1) + float(allele2) == 0:
+				continue
+			if float(allele1) >= float(allele2):
+				ReadRatio = float(allele1)/float(readdepth)
+			else:
+				ReadRatio = float(allele2)/float(readdepth)
+			if ReadRatio > float(readbalCutoff):
+				continue
 
-			het_count += 1
+			del_het_count += 1
 		else:
 			continue
 	
 	#os.remove(vcf_file)
 	
-	return het_count
+	return del_het_count,dup_het_count
 
 	
-def empirical_pvalue(window_het_snps, vcf_outfile, qualCutoff ,readdepthCutoff, calling_method, num_window_samples):
+def empirical_pvalue(window_het_snps, vcf_outfile, qualCutoff ,readdepthCutoff, readbalCutoff, calling_method, num_window_samples):
 	sample_cum_sum = 0
-	sample_het_snps = het_count(vcf_outfile,qualCutoff,readdepthCutoff,calling_method)
+	sample_del_het_snps,sample_dup_het_snps = het_count(vcf_outfile,qualCutoff,readdepthCutoff,readbalCutoff,calling_method)
 	
-	if sample_het_snps > max(window_het_snps):
+	if sample_del_het_snps > max(window_het_snps):
 		sample_cum_sum_pvalue = 1.000
 	
 	else:
@@ -248,12 +245,12 @@ def empirical_pvalue(window_het_snps, vcf_outfile, qualCutoff ,readdepthCutoff, 
 			window_het_snp_count = window_het_snps[i]
 			window_het_snp_sum[window_het_snp_count] += 1
 		
-		for n in range((sample_het_snps+1)):
+		for n in range((sample_del_het_snps+1)):
 			sample_cum_sum += window_het_snp_sum[n]
 		
 		sample_cum_sum_pvalue = sample_cum_sum / num_window_samples
 		
-	return sample_het_snps,sample_cum_sum_pvalue
+	return sample_del_het_snps,sample_dup_het_snps,sample_cum_sum_pvalue
 
 def haplotypecaller_vcf(variant_cols):
 	format = variant_cols[8].split(':')
@@ -426,12 +423,13 @@ def main():
 	rand_readbal = random_readbal(args.variant_permutations,args.vcf,args.variant_quality_cutoff,args.read_depth_cutoff,args.calling_method,chr_prefix)
 	rand_readbal_array = np.array(rand_readbal).reshape(len(rand_readbal));
 	rand_mean = np.mean(rand_readbal_array)
-	#rand_stddev  = np.std(rand_readbal_array)
-	#plus3stddev = rand_mean + (3 * rand_stddev)
-	#minus3stddev = rand_mean - (3 * rand_stddev)
+	rand_stddev  = np.std(rand_readbal_array)
+	plus3stddev = rand_mean + (3 * rand_stddev)
+	minus3stddev = rand_mean - (3 * rand_stddev)
+	plus5stddev = rand_mean + (5 * rand_stddev)
+	minus5stddev = rand_mean - (5 * rand_stddev)
 	
-	out.write("#Random mean read balance = " + str(rand_mean) + "\n")
-	#"\tStd dev = " + str(rand_stddev) + "\t3 Std dev from mean = " + str(plus3stddev) +  " " + str(minus3stddev) + 
+	out.write("#Random mean read balance = " + str(rand_mean) + "\tStd dev = " + str(rand_stddev) + "\t3 Std dev from mean = " + str(plus3stddev) +  " " + str(minus3stddev) + "\t5 Std dev from mean = " + str(plus5stddev) +  " " + str(minus5stddev) + "\n")
 	out.write("#\n")
 	out.write("#CHR\tSTART\tSTOP\tpredicted type\th1 het snp number\th1 pvalue\th3 mean readbal\th3 t-test\th3 ks-test\n")
 	
@@ -519,7 +517,7 @@ def main():
 			window_vcf_filename = "rand_vcf_file_" + str(permutation) + "_" + str(w) + ".vcf"
 			window_vcf_file = os.path.join(args.output_dir, "tmp", window_vcf_filename)
 			vcf_fetch(bzip_vcf,window_vcf_file, window_chr, window_start, window_end)
-			window_het_count.append(het_count(window_vcf_file,args.variant_quality_cutoff,args.read_depth_cutoff,args.calling_method))
+			window_het_count.append(het_count(window_vcf_file,args.variant_quality_cutoff,args.read_depth_cutoff,args.readbal_cutoff,args.calling_method)[0])
 			os.remove(window_vcf_file)
 		
 		if all([ v == 0 for v in window_het_count ]):
@@ -531,18 +529,18 @@ def main():
 			warning_messages.append(no_rand_SNP_warning)
 			warning_count += 1
 			
-			CNV_het_count = het_count(CNV_vcf_file,args.variant_quality_cutoff,args.read_depth_cutoff,args.calling_method)
+			deleted_het_count,duplicated_het_count = het_count(CNV_vcf_file,args.variant_quality_cutoff,args.read_depth_cutoff,args.readbal_cutoff,args.calling_method)
 			
-			out.write(str(CNV_het_count) + "\tnan\t")
+			out.write(str(deleted_het_count) + "\tnan\t")
 			
 		else:
-			CNV_het_count,CNV_emp_pvalue = empirical_pvalue(window_het_count, CNV_vcf_file, args.variant_quality_cutoff, args.read_depth_cutoff, args.calling_method, args.window_permutations)
+			deleted_het_count,duplicated_het_count,CNV_emp_pvalue = empirical_pvalue(window_het_count, CNV_vcf_file, args.variant_quality_cutoff, args.read_depth_cutoff, args.readbal_cutoff, args.calling_method, args.window_permutations)
 			
-			out.write(str(CNV_het_count) + "\t" + str(CNV_emp_pvalue) + "\t")
+			out.write(str(deleted_het_count) + "\t" + str(CNV_emp_pvalue) + "\t")
 
 
 		#DUP
-		if CNV_het_count == 0:
+		if duplicated_het_count == 0:
 			out.write("nan\tnan\tnan\n")
 			
 			no_CNV_SNP_warning = "WARNING: CNV" + str(permutation) + " contains no heterozygous SNPs, unable to perform duplication analyses"
@@ -595,8 +593,3 @@ def main():
 
 if __name__=='__main__':
 	main()
-
-
-
-#total depth cutoff for vcf
-
