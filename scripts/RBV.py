@@ -467,6 +467,7 @@ def main():
 		
 		if args.interval_file is not None:
 			window_size = 0
+			
 			for coord in range(CNV_start,CNV_stop+1):
 				if chr_prefix == True:
 					intervals_CNV_chr = CNV_chr.replace("chr", '', 1)
@@ -475,6 +476,7 @@ def main():
 				for start,stop in intervals[intervals_CNV_chr]:
 					if (start<=coord<=stop):
 						window_size+=1
+						break
 			
 			if window_size > 0:
 				random_windows = make_random_windows.intervals_window(total_intervals, chr_prefix, args.window_permutations, window_size)
