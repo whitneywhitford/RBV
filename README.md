@@ -82,7 +82,6 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
 		                indexing, with the six columns being the chromosome name, start
 		                coordinate, stop coordinate, plus sign, and type.
 		                REQUIRED for if using WES seq_type.
-	
   --calling_method      REQUIRED. Variant calling method used for VCF generation.
 		                Options: haplotypecaller, samtools, freebayes, platypus.
 ~~~~ 
