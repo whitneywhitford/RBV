@@ -76,9 +76,7 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
                         Number of permutations to use for read balance
                         analyses.Default is 1000
   --seq_type            REQUIRED. Type of genome sequencing for RBV analysis.
-		                Options: WGS, WES.
-          
-		
+		                Options: WGS, WES.		
   --interval_file       Picard-style interval_list containing interval coordinates
 		                used for variant calling. Must be typical interval_list format: 1-based
 		                indexing, with the six columns being the chromosome name, start
