@@ -29,7 +29,6 @@ Python: 2.7
 Python packages:
 - matplotlib
 - numpy
-- pybedtools
 - PyVCF
 - scipy
 - shutil
@@ -47,10 +46,11 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
 ### Arguments
   ~~~~ -h, --help            show this help message and exit
   --ref REF             REQUIRED. Path to reference sequence (including file name).
-  --CNV_bed CNV_BED     REQUIRED. Bed file containing targets to use in CNV analyses Must be typical bed format,
-                        0-based indexing, with the first four columns the chromosome name, start coordinate,
-                        stop coordinate, and predicted CNV type.
-  --gap_bed GAP_BED     REQUIRED. Bed file containing gaps in the reference to mask for random generation. Must 
+  --CNV_file CNV_FILE   REQUIRED. Picard-style interval_list containing targets to use in CNV analyses.
+		                Must be typical interval_list format: 1-based indexing, with the six
+		                columns being the chromosome name, start coordinate, stop coordinate,
+		                plus sign, and predicted CNV type.
+  --gap_file GAP_FILE   REQUIRED. Bed file containing gaps in the reference to mask for random generation. Must 
                         be typical bed format, 0-based indexing,with the first four columns the chromosome name,
                         start coordinate,stop coordinate, and predicted type.
   --vcf VCF             REQUIRED. VCF file containing the variants for RBV analyses.VCF must be generated using
@@ -59,17 +59,34 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
                         Output directory. RBV will create a temporary directory and output file within this
                         directory.
   --sample_id SAMPLE_ID, -id SAMPLE_ID
-                        Name/ID of sample - for use in plot titles and file
-                        naming. Default is sample
+                        Name/ID of sample - for use in and file naming. Default is sample
   --variant_quality_cutoff VARIANT_QUALITY_CUTOFF, -vqc VARIANT_QUALITY_CUTOFF
                         Consider all SNPs with a quality greater than or equal
                         to this value. Default is 20.
+  --read_depth_cutoff", "-rdc"
+                        Consider all SNPs with a read depth greater than or
+		                equal to this value. Default is 10.
+  --readbal_cutoff", "-rbc"
+		                For deletion analyses, consider all heterozygous SNPs with a
+		                read balance less than this value. Default is 0.65.
   --variant_permutations VARIANT_PERMUTATIONS
                         Number of permutations to use for heterozygous read
                         balance analyses. Default is 10000
   --window_permutations WINDOW_PERMUTATIONS
                         Number of permutations to use for read balance
                         analyses.Default is 1000
+  --seq_type            REQUIRED. Type of genome sequencing for RBV analysis.
+		                Options: WGS, WES.
+          
+		
+  --interval_file       Picard-style interval_list containing interval coordinates
+		                used for variant calling. Must be typical interval_list format: 1-based
+		                indexing, with the six columns being the chromosome name, start
+		                coordinate, stop coordinate, plus sign, and type.
+		                REQUIRED for if using WES seq_type.
+	
+  --calling_method      REQUIRED. Variant calling method used for VCF generation.
+		                Options: haplotypecaller, samtools, freebayes, platypus.
 ~~~~ 
 
 
