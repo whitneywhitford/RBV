@@ -25,7 +25,7 @@ def parse_args():
 		"--CNV_file", required=True,
 		help="REQUIRED. Picard-style interval_list containing targets to use in CNV analyses."
 		"Must be typical interval_list format: 1-based indexing, with the six"
-		"columnsbeing the chromosome name, start coordinate, stop coordinate,"
+		"columns being the chromosome name, start coordinate, stop coordinate,"
 		"plus sign, and predicted CNV type.")
 
 	parser.add_argument(
@@ -47,8 +47,7 @@ def parse_args():
 
 	parser.add_argument(
 		"--sample_id", "-id", default="sample",
-		help="Name/ID of sample - for use in plot titles and file naming. "
-		"Default is sample")
+		help="Name/ID of sample - for use in file naming. Default is sample")
 
 	# Variant Calling Flags
 	parser.add_argument(
@@ -123,14 +122,6 @@ def parse_args():
 	return args
 
 
-	
-	
-	
-	
-	
-	
-	
-
 #make_random_vars
 	
 def rand_het_sites(no_of_samples,vcf_file,chr_prefix):	
@@ -200,8 +191,6 @@ def het_count(vcf_file,qualCutoff,readdepthCutoff,readbalCutoff,calling_method):
 			if GT == './.' or GT == '.|.':
 				continue
 			
-			dup_het_count += 1
-			
 			allele_reads = globals()[calling_method + "_vcf"]
 			allele1, allele2 = allele_reads(cols)
 			
@@ -211,6 +200,9 @@ def het_count(vcf_file,qualCutoff,readdepthCutoff,readbalCutoff,calling_method):
 			
 			if ',' in allele1 or ',' in allele2:
 				continue
+				
+			dup_het_count += 1
+			
 			if float(allele1) + float(allele2) == 0:
 				continue
 			if float(allele1) >= float(allele2):
@@ -221,6 +213,7 @@ def het_count(vcf_file,qualCutoff,readdepthCutoff,readbalCutoff,calling_method):
 				continue
 
 			del_het_count += 1
+			
 		else:
 			continue
 	
@@ -424,14 +417,10 @@ def main():
 	rand_readbal_array = np.array(rand_readbal).reshape(len(rand_readbal));
 	rand_mean = np.mean(rand_readbal_array)
 	rand_stddev  = np.std(rand_readbal_array)
-	plus3stddev = rand_mean + (3 * rand_stddev)
-	minus3stddev = rand_mean - (3 * rand_stddev)
-	plus5stddev = rand_mean + (5 * rand_stddev)
-	minus5stddev = rand_mean - (5 * rand_stddev)
 	
-	out.write("#Random mean read balance = " + str(rand_mean) + "\tStd dev = " + str(rand_stddev) + "\t3 Std dev from mean = " + str(plus3stddev) +  " " + str(minus3stddev) + "\t5 Std dev from mean = " + str(plus5stddev) +  " " + str(minus5stddev) + "\n")
+	out.write("#Random mean read balance = " + str(rand_mean) + "\tStd dev = " + str(rand_stddev) + "\n")
 	out.write("#\n")
-	out.write("#CHR\tSTART\tSTOP\tpredicted type\th1 het snp number\th1 pvalue\th3 mean readbal\th3 t-test\th3 ks-test\n")
+	out.write("#CHR\tSTART\tSTOP\tpredicted type\th1 het snp number\th1 p-value\th3 het snp number\th3 mean readbal\th3 p-value\n")
 	
 	if args.interval_file is not None:
 		intervals = make_random_windows.intervals(args.interval_file,chr_prefix)
@@ -542,10 +531,12 @@ def main():
 
 
 		#DUP
+		out.write(str(duplicated_het_count) + "\t")	
+		
 		if duplicated_het_count == 0:
-			out.write("nan\tnan\tnan\n")
+			out.write("nan\tnan\n")
 			
-			no_CNV_SNP_warning = "WARNING: CNV" + str(permutation) + " contains no heterozygous SNPs, unable to perform duplication analyses"
+			no_CNV_SNP_warning = "WARNING: CNV" + str(permutation) + " contains no heterozygous SNPs, unable to perform duplication analysis"
 			
 			sys.stderr.write("[" + str(datetime.now()) + "] " + no_CNV_SNP_warning + "\n")
 			
@@ -559,36 +550,24 @@ def main():
 			CNV_readbal_array_length = len(CNV_readbal_array)
 			
 			CNV_mean = np.mean(CNV_readbal_array)
-			out.write(str(CNV_mean) + "\t")
-			
-			if CNV_readbal_array_length > 1:
-				CNV_ttest_stat,CNV_ttest_pvalue = stats.ttest_ind(CNV_readbal_array, rand_readbal_array, equal_var=False)
-				out.write(str(CNV_ttest_pvalue) + "\t")
-			else:
-				single_CNV_hetSNP_warning = "WARNING: CNV" + str(permutation) + " contains only one heterozygous SNP. Welch's t-test not possible, please refer to KS test p-value"
-				
-				out.write("nan\t")
-				
-				sys.stderr.write("[" + str(datetime.now()) + "] " + single_CNV_hetSNP_warning + "\n")
-				
-				warning_messages.append(single_CNV_hetSNP_warning)
-				warning_count += 1
-			
+			out.write(str(CNV_mean) + "\t")			
 			
 			CNV_kstest_stat,CNV_kstest_pvalue = stats.ks_2samp(CNV_readbal_array, rand_readbal_array)
 				
 			out.write(str(CNV_kstest_pvalue) + "\n")
 		
-		os.remove(CNV_vcf_file)
+		#os.remove(CNV_vcf_file)
 	
-	rmtree(tmp)
+	#rmtree(tmp)
 		
 	out.close()
 	
 	sys.stdout.write("------------------------------------------------------------------------------------------\n")
 	sys.stdout.write("------------------------------------------------------------------------------------------\n")
-	sys.stdout.write("[" + str(datetime.now()) + "] Done. There were " + str(warning_count) + " WARNING messages.\n")
-	#sys.stdout.write("\n".join([str(x) for x in warning_messages]) + "\n")
+	if warning_count == 1:
+		sys.stdout.write("[" + str(datetime.now()) + "] Done. There was " + str(warning_count) + " WARNING message.\n")
+	else:
+		sys.stdout.write("[" + str(datetime.now()) + "] Done. There were " + str(warning_count) + " WARNING messages.\n")
 	sys.stdout.write("------------------------------------------------------------------------------------------\n")
 		
 
