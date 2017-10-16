@@ -9,6 +9,8 @@ The read balance distribution is different based on the copy number of the genet
 
 <img src="./images/haploid_readbal.png" width="290"><img src="./images/diploid_readbal.png" width="290"><img src="./images/triploid_readbal.png" width="290">
 
+Thus, RBV exploits this difference in distribution to validate CNVs. The python package presented here simultaneously interrogates the probability of multiplications and deletions within a provided list of CNVs to investigate. This allows for prioritisation of CNVs for causation in molecular diagnostic testing bioinformatic pipelines. Additionally, RBV can be used for validation and inheritiance hypothesis testing of causative variants by using RBV on multiple members of a pedigree.
+
 ## Please note RBV is still in pre-release stages
 Changes are made to the master branch quite frequently, so there is a high chance there is a number of known or unknown bugs at any given time. If you'd like to try things before release, please feel free to contact us (either via an Issue or by email to Whitney Whitford - address at the bottom of this page) to enquire about the current status of the program.
 
