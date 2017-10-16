@@ -556,9 +556,9 @@ def main():
 				
 			out.write(str(CNV_kstest_pvalue) + "\n")
 		
-		#os.remove(CNV_vcf_file)
+		os.remove(CNV_vcf_file)
 	
-	#rmtree(tmp)
+	rmtree(tmp)
 		
 	out.close()
 	
