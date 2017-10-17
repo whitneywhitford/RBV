@@ -109,8 +109,6 @@ def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,total_gaps):
 			elif (start<=point<=stop or start<=(point+size)<=stop):
 				include="F"
 				break #if encounters any gap, window won't be included
-			"""elif ((point+size)<start) #need to include a merge step in the gaps first
-				break"""
 		
 		# Return points in accessible regions
 		if include=="T":
@@ -292,6 +290,3 @@ def intervals_window(interval_list, chr_prefix, no_of_samples, size):
 	random_windows = make_bed(a,chr_prefix)
 	return random_windows
 
-
-#if __name__=='__main__':
-#	main(ref_fai, gapfile, no_of_samples, size)

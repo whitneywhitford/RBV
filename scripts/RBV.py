@@ -218,8 +218,6 @@ def het_count(vcf_file,qualCutoff,readdepthCutoff,readbalCutoff,calling_method):
 		else:
 			continue
 	
-	#os.remove(vcf_file)
-	
 	return del_het_count,dup_het_count
 
 	
@@ -495,9 +493,7 @@ def main():
 			else:
 				zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)
 				random_windows = [zero_window]
-			
-			#random_windows = make_random_windows.gaps_windows(ref_file, total_gap_sites, chr_prefix, args.window_permutations, window_size)
-			
+						
 		sys.stdout.write("[" + str(datetime.now()) + "] Random window generation - CNV"+str(permutation)+" complete.\n")
 		
 		window_het_count = []
