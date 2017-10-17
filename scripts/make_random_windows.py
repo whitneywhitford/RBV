@@ -173,6 +173,8 @@ def random_intervals(interval_list, CNVs):
 	unsorted_rand_intervals = deepcopy(interval_list)	#make copy of intervals that does not reference original
 	
 	for chr in CNVs:
+		if  chr not in unsorted_rand_intervals.keys():
+			continue
 		for CNV_start, CNV_stop in CNVs[chr]:
 			for interval in unsorted_rand_intervals[chr]:
 				interval_start = interval[0]
