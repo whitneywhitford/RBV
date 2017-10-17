@@ -38,7 +38,8 @@ def parse_args():
 	parser.add_argument(
 		"--vcf", required=True,
 		help="REQUIRED. VCF file containing the variants for RBV analyses."
-		"VCF must be generated using HaploTypeCaller.")
+		"VCF must be single individual vcf file but can be derived from joint"
+		"calling pipeline.")
 	
 	parser.add_argument(
 		"--output_dir", "-o", default="RBV",
