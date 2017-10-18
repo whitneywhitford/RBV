@@ -56,7 +56,7 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
 			mask for random generation. Must be typical interval_file format:
 			1-based, indexing, with the six columns being the chromosome name,
 			start coordinate, stop coordinate, plus sign, and type.
-  --vcf VCF         REQUIRED. VCF file containing the variants for RBV analyses.
+  --vcf VCF         	REQUIRED. VCF file containing the variants for RBV analyses.
 			VCF must be single individual vcf file but can be derived from joint
 			calling pipeline.
   --output_dir OUTPUT_DIR, -o OUTPUT_DIR
