@@ -49,16 +49,16 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
   ~~~~ -h, --help       show this help message and exit
   --ref REF             REQUIRED. Path to reference sequence (including file name).
   --CNV_file CNV_FILE   REQUIRED. Picard-style interval_list containing targets to use in CNV analyses.
-		        Must be typical interval_list format: 1-based indexing, with the six
-		        columns being the chromosome name, start coordinate, stop coordinate,
-		        plus sign, and predicted CNV type.
+		        	Must be typical interval_list format: 1-based indexing, with the six
+		        	columns being the chromosome name, start coordinate, stop coordinate,
+		        	plus sign, and predicted CNV type.
   --gap_file GAP_FILE   Picard-style interval_list containing gaps in the reference to
-			mask for random generation. Must be typical interval_file format:
-			1-based, indexing, with the six columns being the chromosome name,
-			start coordinate, stop coordinate, plus sign, and type.
+				mask for random generation. Must be typical interval_file format:
+				1-based, indexing, with the six columns being the chromosome name,
+				start coordinate, stop coordinate, plus sign, and type.
   --vcf VCF         	REQUIRED. VCF file containing the variants for RBV analyses.
-			VCF must be single individual vcf file but can be derived from joint
-			calling pipeline.
+				VCF must be single individual vcf file but can be derived from joint
+				calling pipeline.
   --output_dir OUTPUT_DIR, -o OUTPUT_DIR
                         Output directory. RBV will create a temporary directory and output file within this
                         directory.
@@ -70,8 +70,8 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
   --read_depth_cutoff", "-rdc"
                         Consider all SNPs with a read depth greater than or equal to this value. Default is 10.
   --readbal_cutoff", "-rbc"
-		        For deletion analyses, consider all heterozygous SNPs with a
-		        read balance less than this value. Default is 0.65.
+		        	For deletion analyses, consider all heterozygous SNPs with a
+		        	read balance less than this value. Default is 0.65.
   --variant_permutations VARIANT_PERMUTATIONS
                         Number of permutations to use for heterozygous read
                         balance analyses. Default is 10000
@@ -79,14 +79,14 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
                         Number of permutations to use for read balance
                         analyses.Default is 1000
   --seq_type            REQUIRED. Type of genome sequencing for RBV analysis.
-		        Options: WGS, WES.		
+		        	Options: WGS, WES.		
   --interval_file       Picard-style interval_list containing interval coordinates
-		        used for variant calling. Must be typical interval_list format: 1-based
-		        indexing, with the six columns being the chromosome name, start
-		        coordinate, stop coordinate, plus sign, and type.
-		        REQUIRED for if using WES seq_type.
+		        	used for variant calling. Must be typical interval_list format: 1-based
+		        	indexing, with the six columns being the chromosome name, start
+		        	coordinate, stop coordinate, plus sign, and type.
+		        	REQUIRED for if using WES seq_type.
   --calling_method      REQUIRED. Variant calling method used for VCF generation.
-		        Options: haplotypecaller, samtools, freebayes, platypus.
+		        	Options: haplotypecaller, samtools, freebayes, platypus.
 ~~~~ 
 
 
