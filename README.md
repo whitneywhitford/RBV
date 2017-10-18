@@ -52,10 +52,10 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
 		       	      Must be typical interval_list format: 1-based indexing, with the six
 		              columns being the chromosome name, start coordinate, stop coordinate,
 		       	      plus sign, and predicted CNV type.
-  --gap_file GAP_FILE         Picard-style interval_list containing gaps in the reference to
-		             mask for random generation. Must be typical interval_file format:
-		             1-based, indexing, with the six columns being the chromosome name,
-		             start coordinate, stop coordinate, plus sign, and type.
+  --gap_file GAP_FILE   Picard-style interval_list containing gaps in the reference to
+		              mask for random generation. Must be typical interval_file format:
+		              1-based, indexing, with the six columns being the chromosome name,
+		              start coordinate, stop coordinate, plus sign, and type.
   --vcf VCF             REQUIRED. VCF file containing the variants for RBV analyses.
 			      VCF must be single individual vcf file but can be derived from joint
 			      calling pipeline.
