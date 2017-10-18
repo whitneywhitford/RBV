@@ -56,7 +56,7 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
 			mask for random generation. Must be typical interval_file format:
 			1-based, indexing, with the six columns being the chromosome name,
 			start coordinate, stop coordinate, plus sign, and type.
-  --vcf VCF             REQUIRED. VCF file containing the variants for RBV analyses.
+  --vcf VCF         REQUIRED. VCF file containing the variants for RBV analyses.
 			VCF must be single individual vcf file but can be derived from joint
 			calling pipeline.
   --output_dir OUTPUT_DIR, -o OUTPUT_DIR
@@ -68,8 +68,7 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
                         Consider all SNPs with a quality greater than or equal
                         to this value. Default is 20.
   --read_depth_cutoff", "-rdc"
-                        Consider all SNPs with a read depth greater than or
-		                equal to this value. Default is 10.
+                        Consider all SNPs with a read depth greater than or equal to this value. Default is 10.
   --readbal_cutoff", "-rbc"
 		        For deletion analyses, consider all heterozygous SNPs with a
 		        read balance less than this value. Default is 0.65.
@@ -87,7 +86,7 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
 		        coordinate, stop coordinate, plus sign, and type.
 		        REQUIRED for if using WES seq_type.
   --calling_method      REQUIRED. Variant calling method used for VCF generation.
-		                Options: haplotypecaller, samtools, freebayes, platypus.
+		        Options: haplotypecaller, samtools, freebayes, platypus.
 ~~~~ 
 
 
