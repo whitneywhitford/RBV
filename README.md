@@ -11,17 +11,17 @@ The read balance distribution is different based on the copy number of the genet
 
 Thus, RBV exploits this difference in distribution to validate CNVs. The python package presented here simultaneously interrogates the probability of multiplications and deletions within a provided list of CNVs to investigate. This allows for prioritisation of CNVs for causation in molecular diagnostic testing bioinformatic pipelines. Additionally, RBV can be used for validation and inheritiance hypothesis testing of causative variants by using RBV on multiple members of a pedigree.
 
-## Citation
+### Citation
 
 
 
-## Obtaining
+### Obtaining
 To download RBV, please use git to download the most recent version.  Currently, the RBV is hosted on github, and can be obtained via:
 
     git clone --recursive https://github.com/whitneywhitford/RBV.git
 
 
-## Requirements
+### Requirements
 Python: 2.7
 
 Python packages:
@@ -36,12 +36,12 @@ External Programs:
 - bedtools
 - samtools
 
-## Usage
+### Usage
 RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the reference for the genome used to align the genome, the level of sequecing that was performed (WGS or WES), and the variant caller used. Therefore an RBV command in its simplest form is:
 
   	python RBV.py --ref ref.fa --CNV_file CNV.interval_file --vcf variants.vcf --seq_type type --calling_method variantCaller
   
-### Arguments
+#### Arguments
   ~~~~ -h, --help       show this help message and exit
   --ref REF             REQUIRED. Path to reference sequence (including file name).
   --CNV_file CNV_FILE   REQUIRED. Picard-style interval_list containing targets to use in CNV analyses.
@@ -86,7 +86,7 @@ RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the 
 ~~~~ 
 
 
-## Contributors
+### Contributors
 
 RBV is made by:
 
@@ -95,6 +95,6 @@ RBV is made by:
 - Russell Snell
 - Jessie Jacobsen
 
-## Support
+### Support
 
 Please report any issues or questions by email to whitney.whitford@auckland.ac.nz
