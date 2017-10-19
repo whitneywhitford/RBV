@@ -2,7 +2,7 @@
 ## User manual and guide
 
 
-## Overview
+### Overview
 **RBV:** Read balance validator is a Copy number variant (CNV) validator. It uses the relative reads for the reference and alternative allele at a given position (the read balance) to determine the probability of a putative CNV being true.
 
 The read balance distribution is different based on the copy number of the genetic sequence. As seen blow, single copy deletions result in haploid genetic sequence with zero heterozygous single nucleotide polymorphisms (SNPs), with the distribution ratio of reads centred around 1. In regions with diploid sequence, the majority of SNPs are homozygous, with the read balance centred around 1. The remaining SNPs are heterozygous with the distribution centred around 0.5, representing half of the reads from one allele and half from the other. Duplications also have the majority of SNPs being homozygous, however the heterozygous SNPs are represented by 2 different peaks in distribution. For a duplication the resulting triplicate genomic sequence would result in the distribution seen below where there are peaks centred around 0.33 and 0.66 which represent regions with 1 and 2 copies respectively.
