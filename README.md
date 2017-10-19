@@ -20,7 +20,6 @@ To download RBV, please use git to download the most recent version.  Currently,
 
     git clone --recursive https://github.com/whitneywhitford/RBV.git
 
-Note the use of --recursive.  This is required in order to download all nested git submodules for external repositories.
 
 ## Requirements
 Python: 2.7
