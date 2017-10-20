@@ -1,0 +1,4 @@
+gunzip sample_ref.fa.gz
+python RBV.py --CNV_file sample_CNV.interval_file --interval_file sample_WGS_callable_regions.interval_file --vcf sample_WGS.vcf --sample_id sample_WGS --output_dir RBV_sample_WGS_interval --seq_type WGS --calling_method haplotypecaller
+python RBV.py --CNV_file sample_CNV.interval_file --ref sample_ref.fa --gap_file sample_gaps.interval_file --vcf sample_WGS.vcf --sample_id sample_WGS --output_dir RBV_sample_WGS_gaps --seq_type WGS --calling_method haplotypecaller
+python RBV.py --CNV_file sample_CNV.interval_file --ref sample_ref.fa --vcf sample_WGS.vcf --sample_id sample_WGS --output_dir RBV_sample_WGS_NoGaps --seq_type WGS --calling_method haplotypecaller
