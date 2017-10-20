@@ -33,7 +33,7 @@ Python packages:
 - datetime
 
 External Programs:
-- bedtools
+- SAMtools
 
 ### Usage
 RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the reference for the genome used to align the genome, the level of sequecing that was performed (WGS or WES), and the variant caller used. Therefore an RBV command in its simplest form is:
