@@ -1,2 +1,2 @@
 gunzip sample_ref.fa.gz
-python RBV.py --CNV_file sample_CNV.interval_file --interval_file sample_exome_probes.interval_list --vcf sample_WES.vcf --sample_id sample_WES --output_dir RBV_sample_WES --seq_type WES --calling_method haplotypecaller
+python ../../scripts/RBV.py --CNV_file sample_CNV.interval_file --interval_file sample_exome_probes.interval_list --vcf sample_WES.vcf --sample_id sample_WES --output_dir RBV_sample_WES --seq_type WES --calling_method haplotypecaller
