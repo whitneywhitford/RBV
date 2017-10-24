@@ -3,13 +3,13 @@
 
 
 ### Overview
-**RBV:** Read balance validator is a Copy number variant (CNV) validator. It uses the relative reads for the reference and alternative allele at a given position (the read balance) to determine the probability of a putative CNV being true.
+**RBV:** Read balance validator is a corroborates copy number variants (CNV) from whole exome and whole genome sequence data. It uses the relative reads for the reference and alternative allele at a given position (the read balance) to determine the probability that a putative CNV is real.
 
-The read balance distribution is different based on the copy number of the genetic sequence. As seen blow, single copy deletions result in haploid genetic sequence with zero heterozygous single nucleotide polymorphisms (SNPs), with the distribution ratio of reads centred around 1. In regions with diploid sequence, the majority of SNPs are homozygous, with the read balance centred around 1. The remaining SNPs are heterozygous with the distribution centred around 0.5, representing half of the reads from one allele and half from the other. Duplications also have the majority of SNPs being homozygous, however the heterozygous SNPs are represented by 2 different peaks in distribution. For a duplication the resulting triplicate genomic sequence would result in the distribution seen below where there are peaks centred around 0.33 and 0.66 which represent regions with 1 and 2 copies respectively.
+The read balance distribution varies based on the copy number of the genetic sequence. In the example below, single copy deletions (A) result in haploid genetic sequence with no heterozygous single nucleotide polymorphisms (SNPs), thus the distribution ratio of the reads is centred around 1. In regions with diploid sequence (B), the majority of SNPs are homozygous, resulting in a read balance centred around 1. The remaining SNPs in the diploid sequence are heterozygous with the distribution centred around 0.5, representing half of the reads from one allele and half from the other. The majority of SNPs in duplications (C) are also homozygous, with the heterozygous SNPs represented by 2 different peaks in the distribution. The resulting triplicate genomic sequence would result in the distribution seen in C below where there are peaks centred around 0.33 and 0.66 which represent regions with 1 and 2 copies respectively.
 
 <img src="./images/haploid_readbal.png" width="290"><img src="./images/diploid_readbal.png" width="290"><img src="./images/triploid_readbal.png" width="290">
 
-Thus, RBV exploits this difference in distribution to validate CNVs. The python package presented here simultaneously interrogates the probability of multiplications and deletions within a provided list of CNVs to investigate. This allows for prioritisation of CNVs for causation in molecular diagnostic testing bioinformatic pipelines. Additionally, RBV can be used for validation and inheritiance hypothesis testing of causative variants by using RBV on multiple members of a pedigree.
+Thus, RBV exploits this difference in read distribution to validate CNVs. The python package presented here simultaneously interrogates the probability of multiplications and deletions within a provided list of CNVs. This allows for prioritisation of CNVs in molecular diagnostic bioinformatic pipelines. Additionally, RBV can be used for validating inheritance of causative variants using multiple members of a pedigree.
 
 ### Citation
 
@@ -35,7 +35,7 @@ External Programs:
 - tabix
 
 ### Usage
-RBV has 5 required inputs: CNV file containing CNV coordinates, a VCF file, the reference for the genome used to align the genome, the level of sequecing that was performed (WGS or WES), and the variant caller used. Therefore an RBV command in its simplest form is:
+RBV has five required inputs: CNV file containing CNV coordinates, a VCF file, the level of sequencing that was performed (WGS or WES), the variant caller used, and either the reference genome used to align the reads or a list of callable regions in the genome sequence. Therefore an RBV command in its simplest form is:
 
   	python RBV.py --ref ref.fa --CNV_file CNV.interval_file --vcf variants.vcf --seq_type type --calling_method variantCaller
   
