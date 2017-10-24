@@ -26,14 +26,14 @@ def parse_args():
 		help="REQUIRED. Picard-style interval_list containing targets to use in CNV analyses."
 		"Must be typical interval_list format: 1-based indexing, with the six"
 		"columns being the chromosome name, start coordinate, stop coordinate,"
-		"plus sign, and predicted CNV type.")
+		"strand, and predicted CNV type.")
 
 	parser.add_argument(
 		"--gap_file", default=None,
 		help="Picard-style interval_list containing gaps in the reference to"
 		"mask for random generation. Must be typical interval_file format:"
 		"1-based, indexing, with the six columns being the chromosome name,"
-		"start coordinate, stop coordinate, plus sign, and type.")
+		"start coordinate, stop coordinate, strand, and type.")
 		
 	parser.add_argument(
 		"--vcf", required=True,
@@ -86,7 +86,7 @@ def parse_args():
 		help="Picard-style interval_list containing interval coordinates"
 		"used for variant calling. Must be typical interval_list format: 1-based"
 		"indexing, with the six columns being the chromosome name, start"
-		"coordinate, stop coordinate, plus sign, and type."
+		"coordinate, stop coordinate, strand, and type."
 		"REQUIRED for if using WES seq_type.")
 	
 	parser.add_argument(
@@ -440,7 +440,7 @@ def main():
 	
 	#For each CNV
 	for i in range(len(CNVs)):
-		CNV_chr,raw_CNV_start,raw_CNV_stop,plus,CNV_type=CNVs[i].strip().split()
+		CNV_chr,raw_CNV_start,raw_CNV_stop,strand,CNV_type=CNVs[i].strip().split()
 		CNV_start = int(raw_CNV_start)
 		CNV_stop = int(raw_CNV_stop)
 		
