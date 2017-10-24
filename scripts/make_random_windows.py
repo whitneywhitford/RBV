@@ -23,7 +23,7 @@ def gaps(gapfile, chr_prefix):
 	gaps={}
 	
 	for i in range(len(gap_raw)):
-		chr_raw,start,stop,plus,type=gap_raw[i].strip().split()
+		chr_raw,start,stop,strand,type=gap_raw[i].strip().split()
 		if chr_prefix == True:
 			chr = chr_raw.replace("chr", '', 1)
 		else:
@@ -48,7 +48,7 @@ def gaps_total(gaplist,CNVs,chr_prefix):
 	total_gaps = deepcopy(gaplist)
 	
 	for i in range(len(CNVs)):
-		chr_raw,start,stop,plus,type=CNVs[i].strip().split()
+		chr_raw,start,stop,strand,type=CNVs[i].strip().split()
 		if chr_prefix == True:
 			chr = chr_raw.replace("chr", '', 1)
 		else:
@@ -138,7 +138,7 @@ def intervals(intervalfile,chr_prefix):
 	
 	intervals={}
 	for i in range(len(interval_raw)):
-		chr_raw,start,stop,plus,type=interval_raw[i].strip().split()
+		chr_raw,start,stop,strand,type=interval_raw[i].strip().split()
 		if chr_prefix == True:
 			chr = chr_raw.replace("chr", '', 1)
 		else:
@@ -155,7 +155,7 @@ def intervals(intervalfile,chr_prefix):
 def CNV_list(CNVlist,chr_prefix):
 	CNVs={}
 	for i in range(len(CNVlist)):
-		chr_raw,start,stop,plus,type=CNVlist[i].strip().split()
+		chr_raw,start,stop,strand,type=CNVlist[i].strip().split()
 		if chr_prefix == True:
 			chr = chr_raw.replace("chr", '', 1)
 		else:
