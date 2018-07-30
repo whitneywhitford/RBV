@@ -425,10 +425,12 @@ def main():
 		intervals = make_random_windows.intervals(args.interval_file,chr_prefix)
 		CNV_list = make_random_windows.CNV_list(CNVs,chr_prefix)
 		total_intervals = make_random_windows.random_intervals(intervals, CNV_list)
+		chr_interval_len,chr_lst=make_random_windows.intervals_chr_length(total_intervals)
 		
 	elif args.gap_file is not None:
 		gap_sites = make_random_windows.gaps(args.gap_file,chr_prefix)
 		total_gap_sites = make_random_windows.gaps_total(gap_sites,CNVs,chr_prefix)
+		chr_gaps_len,chr_lst=make_random_windows.gaps_chr_length(ref_file, chr_prefix)
 		
 	else:
 		gap_sites = {}
@@ -437,6 +439,7 @@ def main():
 			gap_sites[str(gap_chr)]=[zeros]
 			
 		total_gap_sites = make_random_windows.gaps_total(gap_sites,CNVs,chr_prefix)
+		chr_gaps_len,chr_lst=make_random_windows.gaps_chr_length(ref_file, chr_prefix)
 	
 	#For each CNV
 	for i in range(len(CNVs)):
@@ -467,7 +470,7 @@ def main():
 						break
 			
 			if window_size > 0:
-				random_windows = make_random_windows.intervals_window(total_intervals, chr_prefix, args.window_permutations, window_size)
+				random_windows = make_random_windows.intervals_rand_sites(args.window_permutations,window_size,chr_interval_len,chr_lst,total_intervals,chr_prefix)
 			
 			else:
 				zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)
@@ -488,7 +491,7 @@ def main():
 						break #if encounters any gap, nucleotide won't be included in window size
 			
 			if window_size > 0:
-				random_windows = make_random_windows.gaps_windows(ref_file, total_gap_sites, chr_prefix, args.window_permutations, window_size)
+				random_windows = make_random_windows.gaps_rand_sites(args.window_permutations,window_size,chr_gaps_len,chr_lst,total_gap_sites,chr_prefix)
 			
 			else:
 				zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)

@@ -4,7 +4,7 @@
 import sys
 from copy import deepcopy
 from operator import itemgetter
-
+from random import choice,uniform,seed
 
 
 #define functions
@@ -89,10 +89,11 @@ def gaps_chr_length(ref_fai, chr_prefix):
 	return chr_len, chr_lst
 
 
-def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,total_gaps):
-	from random import choice,uniform,seed
+def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,total_gaps,chr_prefix):
 	seed(None)
 	count=1
+	windows = []
+	
 	# Choose chromosome and point on chromosome
 	while count<=no_of_samples:
 		chr=choice(chr_lst)
@@ -112,18 +113,13 @@ def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,total_gaps):
 		
 		# Return points in accessible regions
 		if include=="T":
-			yield count,int(chr),point,(point+size)
+			if chr_prefix == True:
+				windows.append("chr" + str(chr) +" "+ str(point) +" "+ str(point+size) +" "+ str(count))
+			else:
+				windows.append(str(chr) +" "+ str(point) +" "+ str(point+size) +" "+ str(count))
 			count+=1
-
-
-def gaps_make_random(no_of_samples,size,chr_len,chr_lst,total_gaps):
-	from operator import itemgetter
-	
-	a=gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,total_gaps)
-	b=sort_coords(a)
-	
-	return b
-
+				
+	return windows
 		
 		
 #intervals functions
@@ -213,10 +209,11 @@ def intervals_chr_length(interval_list):
 	
 	return chr_interval_len, chr_lst
 	
-def intervals_rand_sites(no_of_samples,window_size,chr_interval_len,chr_lst,interval_list):
-	from random import choice,uniform,seed
+def intervals_rand_sites(no_of_samples,window_size,chr_interval_len,chr_lst,interval_list,chr_prefix):
 	seed(None)
 	count=1
+	windows = []
+	
 	# Choose chromosome and point on chromosome
 	while count<=no_of_samples:
 		chr=choice(chr_lst)
@@ -237,58 +234,12 @@ def intervals_rand_sites(no_of_samples,window_size,chr_interval_len,chr_lst,inte
 				
 			if window_count >= window_size:
 				window_end = stop - (window_count - window_size)
-				yield count,int(chr),point,window_end
+				if chr_prefix == True:
+					windows.append("chr" + str(chr) +" "+ str(point) +" "+ str(window_end) +" "+ str(count))
+				else:
+					windows.append(str(chr) +" "+ str(point) +" "+ str(window_end) +" "+ str(count))
 				count+=1
 				break
-					
-def intervals_make_random(no_of_samples,size,chr_interval_len,chr_lst,interval_list):
-	from operator import itemgetter
-	
-	a=intervals_rand_sites(no_of_samples,size,chr_interval_len,chr_lst,interval_list)
-	b=sort_coords(a)
-	
-	return b
-
-	
-#shared functions
-def make_bed(gen_out, chr_prefix):
-	windows = []
-	for count,chr,start,end in gen_out:
-
-		if chr_prefix == True:
-			windows.append("chr" + str(chr) +" "+ str(start) +" "+ str(end) +" "+ str(count))
-		else:
-			windows.append(str(chr) +" "+ str(start) +" "+ str(end) +" "+ str(count))
-		
+				
 	return windows
-
-def sort_coords(coords,cols=itemgetter(1,2)):
-	unsorted=[]
-	coord=iter(coords)
-	item=next(coord,None)
-	
-	while item:
-		unsorted.append(item)
-		item=next(coord,None)
-	
-	sorted_regions=sorted(unsorted, key=cols)
-	
-	for i in range(len(sorted_regions)):
-		yield sorted_regions[i]
-
-		
-#main functions
-def gaps_windows(ref_fai, total_gaps, chr_prefix, no_of_samples, size):
-	chr_len,chr_lst=gaps_chr_length(ref_fai, chr_prefix)
-	
-	a=gaps_make_random(no_of_samples,size,chr_len,chr_lst,total_gaps)
-	random_windows = make_bed(a,chr_prefix)
-	return random_windows
-	
-def intervals_window(interval_list, chr_prefix, no_of_samples, size):	
-	chr_interval_len,chr_lst=intervals_chr_length(interval_list)
-	
-	a=intervals_make_random(no_of_samples,size,chr_interval_len,chr_lst,interval_list)
-	random_windows = make_bed(a,chr_prefix)
-	return random_windows
 
