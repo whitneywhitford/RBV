@@ -179,7 +179,7 @@ def random_intervals(interval_list, CNVs):
 					unsorted_rand_intervals[chr].remove([interval_start, interval_stop])
 				elif (interval_start <= CNV_start <= interval_stop) or (interval_start <= CNV_stop <= interval_stop): #if ranges overlap
 					if CNV_start <= interval_start:
-						interval_start = CNV_stop + 1
+						interval[0] = CNV_stop + 1
 					else:
 						interval[1] = CNV_start - 1
 						if CNV_stop <= interval_stop:
