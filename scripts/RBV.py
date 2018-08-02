@@ -423,23 +423,19 @@ def main():
 	
 	if args.interval_file is not None:
 		intervals = make_random_windows.intervals(args.interval_file,chr_prefix)
-		CNV_list = make_random_windows.CNV_list(CNVs,chr_prefix)
-		total_intervals = make_random_windows.random_intervals(intervals, CNV_list)
-		chr_interval_len,chr_lst=make_random_windows.intervals_chr_length(total_intervals)
 		
 	elif args.gap_file is not None:
 		gap_sites = make_random_windows.gaps(args.gap_file,chr_prefix)
-		total_gap_sites = make_random_windows.gaps_total(gap_sites,CNVs,chr_prefix)
-		chr_gaps_len,chr_lst=make_random_windows.gaps_chr_length(ref_file, chr_prefix)
+		intervals = make_random_windows.gaps_intervals(ref_file, gap_sites, chr_prefix)
 		
 	else:
 		gap_sites = {}
-		zeros = [0,0]
-		for gap_chr in range(1,23):
-			gap_sites[str(gap_chr)]=[zeros]
-			
-		total_gap_sites = make_random_windows.gaps_total(gap_sites,CNVs,chr_prefix)
-		chr_gaps_len,chr_lst=make_random_windows.gaps_chr_length(ref_file, chr_prefix)
+		gap_sites['0']=[[0,0]]
+		intervals = make_random_windows.gaps_intervals(ref_file, gap_sites, chr_prefix)
+
+	CNV_list = make_random_windows.CNV_list(CNVs,chr_prefix)
+	total_intervals = make_random_windows.random_intervals(intervals, CNV_list)
+	chr_interval_len,chr_lst=make_random_windows.intervals_chr_length(total_intervals)
 	
 	#For each CNV
 	for i in range(len(CNVs)):
@@ -456,7 +452,7 @@ def main():
 		CNV_vcf_file = os.path.join(args.output_dir, "tmp", CNV_vcf_filename)
 		vcf_fetch(bzip_vcf,CNV_vcf_file, CNV_chr, CNV_start, CNV_stop)
 		
-		if args.interval_file is not None:
+		"""if args.interval_file is not None:
 			window_size = 0
 			
 			for coord in range(CNV_start,CNV_stop+1):
@@ -491,12 +487,31 @@ def main():
 						break #if encounters any gap, nucleotide won't be included in window size
 			
 			if window_size > 0:
-				random_windows = make_random_windows.gaps_rand_sites(args.window_permutations,window_size,chr_gaps_len,chr_lst,total_gap_sites,chr_prefix)
+				random_windows = make_random_windows.intervals_rand_sites(args.window_permutations,window_size,chr_interval_len,chr_lst,total_intervals,chr_prefix)
 			
 			else:
 				zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)
-				random_windows = [zero_window]
-						
+				random_windows = [zero_window]"""
+		
+		window_size = 0
+			
+		for coord in range(CNV_start,CNV_stop+1):
+			if chr_prefix == True:
+				intervals_CNV_chr = CNV_chr.replace("chr", '', 1)
+			else:
+				intervals_CNV_chr = CNV_chr
+			for start,stop in intervals[intervals_CNV_chr]:
+				if (start<=coord<=stop):
+					window_size+=1
+					break
+		
+		if window_size > 0:
+			random_windows = make_random_windows.intervals_rand_sites(args.window_permutations,window_size,chr_interval_len,chr_lst,total_intervals,chr_prefix)
+		
+		else:
+			zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)
+			random_windows = [zero_window]
+		
 		sys.stdout.write("[" + str(datetime.now()) + "] Random window generation - CNV"+str(permutation)+" complete.\n")
 		
 		window_het_count = []

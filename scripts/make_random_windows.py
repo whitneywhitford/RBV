@@ -8,8 +8,7 @@ from random import choice,uniform,seed
 
 
 #define functions
-
-#WGS no intervals functions
+		
 def gaps(gapfile, chr_prefix):
 	# Import chromosome gaps
 	gaplines = open(gapfile, 'r')
@@ -34,39 +33,12 @@ def gaps(gapfile, chr_prefix):
 			gaps[chr].append(gap_region)
 		else:
 			gaps[chr]=[gap_region]
-	
-	#if no gaps in any of chr 1-23, then 0,0 included so can be called in random generation. If need to limit to chromosomes, then use intervals option
-	zeros = [0,0]
-	for gap_chr in range(1,23):
-		if str(gap_chr) not in gaps:
-			gaps[str(gap_chr)]=[zeros]
-
+			
 	return gaps
 
-def gaps_total(gaplist,CNVs,chr_prefix):
-
-	total_gaps = deepcopy(gaplist)
-	
-	for i in range(len(CNVs)):
-		chr_raw,start,stop,strand,type=CNVs[i].strip().split()
-		if chr_prefix == True:
-			chr = chr_raw.replace("chr", '', 1)
-		else:
-			chr = chr_raw
-		CNV_region=[int(start),int(stop)]
-		if chr in total_gaps:
-			total_gaps[chr].append(CNV_region)
-		else:
-			total_gaps[chr]=[CNV_region]
-		
-		for chr in total_gaps:
-			total_gaps[chr] = sorted(total_gaps[chr])
-		
-	return total_gaps
-
-#chr_length modified to fit Readbal
-def gaps_chr_length(ref_fai, chr_prefix):
-	chr_len={}
+def gaps_intervals(ref_fai, gaps, chr_prefix):
+	#set up whole chrom coords
+	chr_coords={}
 	chroms = str(list(range(1,23)))
 	for i in range(len(ref_fai)):
 		raw_chr,length,bite_index,bases_pl,bites_pl=ref_fai[i].strip().split()
@@ -76,51 +48,35 @@ def gaps_chr_length(ref_fai, chr_prefix):
 			int_chr = raw_chr
 		if int_chr in chroms:
 			chr = str(raw_chr)
-			chr_len[int_chr]=int(length)
+			chr_coords[chr]=[[1,int(length)]]
 		else:
 			continue
 	
-	chr_lst=[]
-	for chr in chr_len:							#account for different lengths of chromosomes so that random takes this into account
-		chr_rep=[str(chr)] * int(round(chr_len[str(chr)]/10000000,0))
-		for rep in chr_rep:
-			chr_lst.append(rep)
-
-	return chr_len, chr_lst
-
-
-def gaps_rand_sites(no_of_samples,size,chr_len,chr_lst,total_gaps,chr_prefix):
-	seed(None)
-	count=1
-	windows = []
+	unsorted_intervals = deepcopy(chr_coords)	#make copy of intervals that does not reference original
 	
-	# Choose chromosome and point on chromosome
-	while count<=no_of_samples:
-		chr=choice(chr_lst)
-		point=int(uniform(0,chr_len[chr]-size))
+	for chr in gaps:
+		if  chr not in unsorted_intervals.keys():
+			continue
+		for gap_start, gap_stop in gaps[chr]:
+			for interval in unsorted_intervals[chr]:
+				interval_start = interval[0]
+				interval_stop = interval[1]
+				if (gap_start <= interval_start) and (gap_stop >= interval_stop):
+					unsorted_intervals[chr].remove([interval_start, interval_stop])
+				elif (interval_start <= gap_start <= interval_stop) or (interval_start <= gap_stop <= interval_stop): #if ranges overlap
+					if gap_start <= interval_start:
+						interval[0] = gap_stop + 1
+					else:
+						interval[1] = gap_start - 1
+						if gap_stop <= interval_stop:
+							unsorted_intervals[chr].append([gap_stop+1, interval_stop])
+						
+	intervals = {}
+	for chr in unsorted_intervals:
+		intervals[chr] = sorted(unsorted_intervals[chr])
+	
+	return intervals
 
-		
-		# Exclude inaccessible regions
-		include="T"
-		for start,stop in total_gaps[chr]:
-			#window straddles the whole gap
-			if (point <= start) and ((point+size)>= stop):
-				include="F"
-				break #if encounters any gap, window won't be included
-			elif (start<=point<=stop or start<=(point+size)<=stop):
-				include="F"
-				break #if encounters any gap, window won't be included
-		
-		# Return points in accessible regions
-		if include=="T":
-			if chr_prefix == True:
-				windows.append("chr" + str(chr) +" "+ str(point) +" "+ str(point+size) +" "+ str(count))
-			else:
-				windows.append(str(chr) +" "+ str(point) +" "+ str(point+size) +" "+ str(count))
-			count+=1
-				
-	return windows
-		
 		
 #intervals functions
 def intervals(intervalfile,chr_prefix):
