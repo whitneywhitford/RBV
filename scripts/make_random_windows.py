@@ -169,33 +169,46 @@ def intervals_rand_sites(no_of_samples,window_size,chr_interval_len,chr_lst,inte
 	seed(None)
 	count=1
 	windows = []
-	
+	window_count = 0
 	# Choose chromosome and point on chromosome
 	while count<=no_of_samples:
 		chr=choice(chr_lst)
-		point=int(uniform(1,chr_interval_len[chr]-window_size))
+		point=int(uniform(1,chr_interval_len[chr]-1))
 		past_start = False
-		window_count = 0
+		window_finished = False
 		
 		for start,stop in interval_list[chr]:
 			if (past_start == False) and (point < start):
+				window_finished = True
 				break
 				
 			elif start<=point<=stop:	#start found
-				window_count = (stop - point) + 1
+				window_count += (stop - point) + 1
 				past_start = True
+				interval_start = point
 
 			elif past_start: 
 				window_count += (stop - start) + 1
+				interval_start = start
 				
-			if window_count >= window_size:
+			if  window_size <= window_count:
 				window_end = stop - (window_count - window_size)
+				window_final = window_count-(window_count - window_size)
+
 				if chr_prefix == True:
-					windows.append("chr" + str(chr) +" "+ str(point) +" "+ str(window_end) +" "+ str(count))
+					windows.append("chr" + str(chr) +" "+ str(interval_start) +" "+ str(window_end) +" "+ str(count))
 				else:
-					windows.append(str(chr) +" "+ str(point) +" "+ str(window_end) +" "+ str(count))
+					windows.append(str(chr) +" "+ str(interval_start) +" "+ str(window_end) +" "+ str(count))
+
 				count+=1
+				window_count = 0
+				window_finished = True
 				break
-				
+			elif past_start:
+				if chr_prefix == True:
+					windows.append("chr" + str(chr) +" "+ str(interval_start) +" "+ str(stop) +" "+ str(count))
+				else:
+					windows.append(str(chr) +" "+ str(interval_start) +" "+ str(stop) +" "+ str(count))
+
 	return windows
 

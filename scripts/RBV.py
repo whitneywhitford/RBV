@@ -452,47 +452,6 @@ def main():
 		CNV_vcf_file = os.path.join(args.output_dir, "tmp", CNV_vcf_filename)
 		vcf_fetch(bzip_vcf,CNV_vcf_file, CNV_chr, CNV_start, CNV_stop)
 		
-		"""if args.interval_file is not None:
-			window_size = 0
-			
-			for coord in range(CNV_start,CNV_stop+1):
-				if chr_prefix == True:
-					intervals_CNV_chr = CNV_chr.replace("chr", '', 1)
-				else:
-					intervals_CNV_chr = CNV_chr
-				for start,stop in intervals[intervals_CNV_chr]:
-					if (start<=coord<=stop):
-						window_size+=1
-						break
-			
-			if window_size > 0:
-				random_windows = make_random_windows.intervals_rand_sites(args.window_permutations,window_size,chr_interval_len,chr_lst,total_intervals,chr_prefix)
-			
-			else:
-				zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)
-				random_windows = [zero_window]
-		
-		else:
-			window_size = CNV_stop - CNV_start + 1
-			
-			for coord in range(CNV_start,CNV_stop+1):
-				if chr_prefix == True:
-					gaps_CNV_chr = CNV_chr.replace("chr", '', 1)
-				else:
-					gaps_CNV_chr = CNV_chr
-				
-				for start,stop in gap_sites[gaps_CNV_chr]:
-					if start<=coord<=stop:
-						window_size-=1
-						break #if encounters any gap, nucleotide won't be included in window size
-			
-			if window_size > 0:
-				random_windows = make_random_windows.intervals_rand_sites(args.window_permutations,window_size,chr_interval_len,chr_lst,total_intervals,chr_prefix)
-			
-			else:
-				zero_window = str("none") +" "+ str(0) +" "+ str(0) +" "+ str(0)
-				random_windows = [zero_window]"""
-		
 		window_size = 0
 			
 		for coord in range(CNV_start,CNV_stop+1):
@@ -514,17 +473,20 @@ def main():
 		
 		sys.stdout.write("[" + str(datetime.now()) + "] Random window generation - CNV"+str(permutation)+" complete.\n")
 		
-		window_het_count = []
+		#window_het_count = []
+		window_het_count = np.zeros(((args.window_permutations),), dtype=np.int)
 		for w in range(len(random_windows)):		
-			window_chr,raw_window_start,raw_window_end,window_count= random_windows[w].split()
+			window_chr,raw_window_start,raw_window_end,raw_window_count= random_windows[w].split()
 			window_start = int(raw_window_start)
 			window_end = int(raw_window_end)
+			window_count = int(raw_window_count)
 			
 			window_vcf_filename = "rand_vcf_file_" + str(permutation) + "_" + str(w) + ".vcf"
 			window_vcf_file = os.path.join(args.output_dir, "tmp", window_vcf_filename)
 			vcf_fetch(bzip_vcf,window_vcf_file, window_chr, window_start, window_end)
-			window_het_count.append(het_count(window_vcf_file,args.variant_quality_cutoff,args.read_depth_cutoff,args.readbal_cutoff,args.calling_method)[0])
+			window_het_count[window_count-1] += het_count(window_vcf_file,args.variant_quality_cutoff,args.read_depth_cutoff,args.readbal_cutoff,args.calling_method)[0]
 			os.remove(window_vcf_file)
+			
 		
 		if all([ v == 0 for v in window_het_count ]):
 			
