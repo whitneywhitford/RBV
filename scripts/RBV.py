@@ -357,7 +357,7 @@ def main():
 	args = parse_args()
 	
 	sys.stdout.write("------------------------------------------------------------------------------------------\n")
-	sys.stdout.write("[" + str(datetime.now()) + "] Read Balance Validator (RBV) v1.0.0\n")
+	sys.stdout.write("[" + str(datetime.now()) + "] Read Balance Validator (RBV) v1.1\n")
 	sys.stdout.write("[" + str(datetime.now()) + "] Copyright (c) 2017 Whitney Whitford\n")
 	sys.stdout.write("[" + str(datetime.now()) + "] For support and documentation go to https://github.com/whitneywhitford/RBV\n")
 	sys.stdout.write("[" + str(datetime.now()) + "] Program Args: " + str(sys.argv) + "\n")
