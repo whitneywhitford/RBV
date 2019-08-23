@@ -15,11 +15,11 @@ from datetime import datetime
 def parse_args():
 	"""Parse command-line arguments"""
 
-	parser = argparse.ArgumentParser(description="RBV")
+	parser = argparse.ArgumentParser(description="RBV: Read Balance Validator")
 
 	parser.add_argument(
 		"--ref", default=None,
-		help="REQUIRED. Path to reference sequence (including file name).")
+		help="Path to reference sequence (including file name).")
 	
 	parser.add_argument(
 		"--CNV_file", required=True,
@@ -93,6 +93,10 @@ def parse_args():
 		"--calling_method", required=True,
 		help="REQUIRED. Variant calling method used for VCF generation."
 		"Options: haplotypecaller, samtools, freebayes, platypus.")
+	
+	parser.add_argument(
+		"--query_CNVs", type=int, default=None,
+		help="Number of CNVs to return results for.")
 	
 	args = parser.parse_args()
 	
@@ -357,7 +361,7 @@ def main():
 	args = parse_args()
 	
 	sys.stdout.write("------------------------------------------------------------------------------------------\n")
-	sys.stdout.write("[" + str(datetime.now()) + "] Read Balance Validator (RBV) v1.1\n")
+	sys.stdout.write("[" + str(datetime.now()) + "] Read Balance Validator (RBV) v1.2\n")
 	sys.stdout.write("[" + str(datetime.now()) + "] Copyright (c) 2017 Whitney Whitford\n")
 	sys.stdout.write("[" + str(datetime.now()) + "] For support and documentation go to https://github.com/whitneywhitford/RBV\n")
 	sys.stdout.write("[" + str(datetime.now()) + "] Program Args: " + str(sys.argv) + "\n")
@@ -436,6 +440,15 @@ def main():
 	CNV_list = make_random_windows.CNV_list(CNVs,chr_prefix)
 	total_intervals = make_random_windows.random_intervals(intervals, CNV_list)
 	chr_interval_len,chr_lst=make_random_windows.intervals_chr_length(total_intervals)
+	
+	
+	current_query = 0
+	
+	if args.query_CNVs is not None:
+		query_num = args.query_CNVs
+	else:
+		query_num = len(CNVs)
+	
 	
 	#For each CNV
 	for i in range(len(CNVs)):
@@ -534,6 +547,10 @@ def main():
 			out.write(str(CNV_kstest_pvalue) + "\n")
 		
 		os.remove(CNV_vcf_file)
+		current_query += 1
+		
+		if current_query >= query_num:
+			break
 	
 	rmtree(tmp)
 		

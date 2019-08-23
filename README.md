@@ -1,9 +1,9 @@
-# RBV: Read balance validator
+# RBV: Read Balance Validator
 ## User manual and guide
 
 
 ### Overview
-**RBV:** Read balance validator is a corroborates copy number variants (CNV) from whole exome and whole genome sequence data. It uses the relative reads for the reference and alternative allele at a given position (the read balance) to determine the probability that a putative CNV is real.
+**RBV:** Read Balance Validator is a corroborates copy number variants (CNV) from whole exome and whole genome sequence data. It uses the relative reads for the reference and alternative allele at a given position (the read balance) to determine the probability that a putative CNV is real.
 
 The read balance distribution varies based on the copy number of the genetic sequence. In the example below, single copy deletions (A) result in haploid genetic sequence with no heterozygous single nucleotide polymorphisms (SNPs), thus the distribution ratio of the reads is centred around 1. In regions with diploid sequence (B), the majority of SNPs are homozygous, resulting in a read balance centred around 1. The remaining SNPs in the diploid sequence are heterozygous with the distribution centred around 0.5, representing half of the reads from one allele and half from the other. The majority of SNPs in duplications (C) are also homozygous, with the heterozygous SNPs represented by 2 different peaks in the distribution. The resulting triplicate genomic sequence would result in the distribution seen in C below where there are peaks centred around 0.33 and 0.66 which represent regions with 1 and 2 copies respectively.
 
@@ -41,7 +41,7 @@ RBV has five required inputs: CNV file containing CNV coordinates, a VCF file, t
   
 #### Arguments
   ~~~~ -h, --help       show this help message and exit
-  --ref REF             REQUIRED. Path to reference sequence (including file name).
+  --ref REF             Path to reference sequence (including file name).
   --CNV_file CNV_FILE   REQUIRED. Picard-style interval_list containing targets to use in CNV analyses.
 		       	      Must be typical interval_list format: 1-based indexing, with the six
 		              columns being the chromosome name, start coordinate, stop coordinate,
@@ -81,6 +81,8 @@ RBV has five required inputs: CNV file containing CNV coordinates, a VCF file, t
 		              REQUIRED for if using WES seq_type.
   --calling_method      REQUIRED. Variant calling method used for VCF generation.
 		              Options: haplotypecaller, samtools, freebayes, platypus.
+  --query_CNVs QUERY_CNVS
+                        Number of CNVs to return results for.
 ~~~~ 
 
 
