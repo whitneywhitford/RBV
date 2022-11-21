@@ -13,7 +13,7 @@ Thus, RBV exploits this difference in read distribution to validate CNVs. The py
 
 ### Citation
 
-
+https://www.nature.com/articles/s41598-019-53181-7
 
 ### Obtaining
 To download RBV, please use git to download the most recent version.  Currently, the RBV is hosted on github, and can be obtained via:
